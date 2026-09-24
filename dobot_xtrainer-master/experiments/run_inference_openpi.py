@@ -148,6 +148,29 @@ class TerminalKeys:
             termios.tcsetattr(self.fd, termios.TCSADRAIN, self.old)
 
 
+def select_key_input(terminal_key=None, opencv_key=None, accepted_keys=None):
+    """合并终端与 OpenCV 按键，并优先保留终端已经读到的有效按键。
+
+    OpenCV 窗口偶尔会留下无关按键码。旧逻辑会用它覆盖同一轮已经从终端读到的
+    ``y``，安全提示便会把本条误判为失败。传入 ``accepted_keys`` 时会跳过两个
+    输入源中的无关按键，只返回提示明确允许的决定键。
+    """
+    candidates = []
+    if terminal_key:
+        candidates.append(str(terminal_key).lower())
+
+    if opencv_key is not None:
+        key_code = int(opencv_key) & 0xFF
+        if key_code != 0xFF:
+            candidates.append(chr(key_code).lower())
+
+    if accepted_keys is not None:
+        accepted = {key.lower() for key in accepted_keys}
+        candidates = [key for key in candidates if key in accepted]
+
+    return candidates[0] if candidates else None
+
+
 def _iso_now():
     return datetime.datetime.now().isoformat(timespec="milliseconds")
 
@@ -819,11 +842,12 @@ def main(args):
         set_running_light(env)
         print(f"[START] rollout recording (green light): {path}", flush=True)
 
-    def wait_for_safety_key(keys, message):
+    def wait_for_safety_key(keys, message, accepted_keys):
         """安全提示期间同时接收终端和 OpenCV 预览窗口按键。"""
         print(message, flush=True)
         while True:
-            key = keys.poll()
+            terminal_key = keys.poll()
+            cv_key = None
             if args.show_img:
                 cv2.rectangle(show_canvas, (0, 0), (1920, 42), (0, 0, 0), -1)
                 cv2.putText(
@@ -837,9 +861,12 @@ def main(args):
                     cv2.LINE_AA,
                 )
                 cv2.imshow("openpi", show_canvas)
-                cv_key = cv2.waitKey(20) & 0xFF
-                if cv_key != 255:
-                    key = chr(cv_key).lower()
+                cv_key = cv2.waitKey(20)
+            key = select_key_input(
+                terminal_key,
+                cv_key,
+                accepted_keys=accepted_keys,
+            )
             if key is not None:
                 return key
             time.sleep(0.02)
@@ -864,7 +891,8 @@ def main(args):
                     if not thread.is_alive():
                         raise RuntimeError(f"camera thread {i} died")
 
-                key = keys.poll()
+                terminal_key = keys.poll()
+                cv_key = None
                 if args.show_img:
                     show_canvas[:, :640] = img_list[0][:, :, ::-1]
                     show_canvas[:, 640:1280] = img_list[1][:, :, ::-1]
@@ -900,9 +928,12 @@ def main(args):
                         cv2.LINE_AA,
                     )
                     cv2.imshow("openpi", show_canvas)
-                    cv_key = cv2.waitKey(1) & 0xFF
-                    if cv_key != 255:
-                        key = chr(cv_key).lower()
+                    cv_key = cv2.waitKey(1)
+                key = select_key_input(
+                    terminal_key,
+                    cv_key,
+                    accepted_keys={"r", "s", "f", "h", "q", "e"},
+                )
 
                 if not running:
                     if key == "r":
@@ -1089,10 +1120,22 @@ def main(args):
                     )
                     decision = wait_for_safety_key(
                         keys,
-                        "JOINT JUMP >10deg | y CONTINUE | other FAIL",
+                        "JOINT JUMP >10deg | y CONTINUE | f FAIL",
+                        accepted_keys={"y", "f"},
                     )
                     if decision == "y":
                         requires_smooth_move = True
+                        recorder.add_event(
+                            "joint_increment_override",
+                            step=total_steps,
+                            max_increment_deg=float(
+                                np.rad2deg(np.max(np.abs(arm_delta)))
+                            ),
+                        )
+                        print(
+                            "[OVERRIDE] y accepted; executing a smooth joint move.",
+                            flush=True,
+                        )
                     else:
                         finish_rollout(
                             "failure", "joint_increment_rejected"
@@ -1116,7 +1159,8 @@ def main(args):
                 if "workspace" in violations:
                     decision = wait_for_safety_key(
                         keys,
-                        "XYZ LIMIT | i IGNORE THIS ROLLOUT | other FAIL",
+                        "XYZ LIMIT | i IGNORE THIS ROLLOUT | f FAIL",
+                        accepted_keys={"i", "f"},
                     )
                     if decision == "i":
                         ignore_workspace_safety = True

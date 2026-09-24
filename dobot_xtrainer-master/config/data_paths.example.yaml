@@ -1,0 +1,37 @@
+# X-Trainer 数据路径配置模板
+#
+# 用法：复制为 config/data_paths.yaml 并按本机实际情况填写。
+#   cp config/data_paths.example.yaml config/data_paths.yaml
+#
+# 优先级（高 -> 低）：
+#   1. CLI 参数（如 run_control.py --save-data-path）
+#   2. 环境变量 XTRAINER_RAW_DATA_ROOT / XTRAINER_PROCESSED_DATA_ROOT /
+#      XTRAINER_LEROBOT_DATA_ROOT / XTRAINER_TEST_CONFIG_ROOT
+#   3. 本文件（config/data_paths.yaml）
+#   4. 内置默认：<项目总目录>/data/{raw,processed,lerobot,rejected,test_configs}
+#
+# 注意：
+#   - config/data_paths.yaml 已被 .gitignore 忽略，不要提交开发者本机绝对路径
+#   - 只有本 .example 文件应进版本库
+#   - 读取本文件需要 PyYAML；未安装时会被静默忽略，环境变量与默认值仍生效
+#
+# 本机当前实际生效值（供参考，2026-09-10）：
+#   raw       -> /home/iml/RockyEVO/data/raw
+#                （软链接 -> /home/iml/RockyEVO/dobot_xtrainer/datasets）
+#   其余四项  -> /home/iml/RockyEVO/data/{processed,lerobot,rejected,test_configs}
+# 因为默认值已经正确，本机无需创建 data_paths.yaml。
+
+# 机器人真实采集数据。数采工程写，其余只读。不在此做格式转换。
+raw_data_root: /path/to/RockyEVO/data/raw
+
+# 质检索引、过滤清单、统计结果、中间产物。不覆盖 raw。
+processed_data_root: /path/to/RockyEVO/data/processed
+
+# Converter 从 raw 生成的 LeRobot 训练格式。训练只读这里。
+lerobot_data_root: /path/to/RockyEVO/data/lerobot
+
+# 坏数据的索引/说明/软链接。不移动 raw 实体。
+rejected_data_root: /path/to/RockyEVO/data/rejected
+
+# 真机泛化测试配置（未见位置/角度/组合）。不放训练用 demonstration。
+test_config_root: /path/to/RockyEVO/data/test_configs

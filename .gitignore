@@ -1,0 +1,80 @@
+# ─────────────────────────────────────────────────────────────
+# 大型数据：绝不进 Git
+# ─────────────────────────────────────────────────────────────
+# 唯一 Raw Dataset 实体（data/raw 软链接指向这里）
+/datasets/
+# 项目统一数据根（若有人把 data/ 放进本仓库）
+/data/
+
+# 模型权重 / checkpoint
+*.ckpt
+*.pth
+*.pt
+*.safetensors
+checkpoints/
+**/ModelTrain/ckpt/
+
+# 采集产物与视频
+*.mp4
+*.avi
+*.hdf5
+*.h5
+
+# 归一化统计（由数据生成，可复算）
+assets/
+
+# ─────────────────────────────────────────────────────────────
+# 开发者本机配置：不提交绝对路径
+# ─────────────────────────────────────────────────────────────
+**/config/data_paths.yaml
+.env
+.env.*
+
+# 真实设备配置可能包含本机 sudo 密码；仓库只保存脱敏模板
+/dobot_xtrainer-master/scripts/dobot_config/dobot_settings.ini
+!/dobot_xtrainer-master/scripts/dobot_config/dobot_settings.example.ini
+
+# 本机工具、编辑器状态和操作记录
+.idea/
+.vscode/
+.claude/
+*.log
+.DS_Store
+
+# 本地回滚备份、上传指令和厂商手册
+/rollback_backup_*/
+/upload_msg.txt
+/*.pdf
+
+# ─────────────────────────────────────────────────────────────
+# Python
+# ─────────────────────────────────────────────────────────────
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+.venv/
+venv/
+
+# 编辑器临时文件
+*.swp
+*.swo
+*~
+
+# ─────────────────────────────────────────────────────────────
+# 以下必须保留在版本库（白名单，放在忽略规则之后才生效）
+# ─────────────────────────────────────────────────────────────
+!config/data_paths.example.yaml
+!**/dataset_manifest.json
+!**/rejected_manifest.json
+!**/meta.json
+# 小体积文档与 schema
+!DATA_AUDIT.md
+!DATA_CONTRACT.md
+!docs/**

@@ -62,10 +62,10 @@
     "launched_at": "2026-09-28T01:37:23+08:00",
     "first_step_at": "2026-09-28T01:41:48+08:00",
     "latest_observation": {
-      "observed_at": "2026-09-28T02:09:50+08:00",
-      "step": 1080,
-      "latest_logged_loss_step": 1000,
-      "latest_logged_loss": 0.0161,
+      "observed_at": "2026-09-28T02:35:15+08:00",
+      "step": 2090,
+      "latest_logged_loss_step": 2000,
+      "latest_logged_loss": 0.0109,
       "step_0_loss": 0.082,
       "rate_seconds_per_step": 1.5,
       "gpu_utilization_percent": 100,
@@ -77,6 +77,23 @@
       "size_gib": 42,
       "temporary_directories_remaining": 0,
       "checkpoint_manager_latest_step": 1000,
+      "params_metadata_readable": true,
+      "train_state_metadata_readable": true,
+      "asset_norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
+      "verified": true,
+      "retained": false,
+      "removed_at": "2026-09-28T02:34:20+08:00",
+      "removal_reason": "Orbax max_to_keep=1; checkpoints at keep_period=5000 are retained permanently"
+    },
+    "periodic_checkpoint_validation": {
+      "step": 2000,
+      "finalized_at": "2026-09-28T02:34:20+08:00",
+      "size_gib": 42,
+      "checkpoint_manager_all_steps": [
+        2000
+      ],
+      "checkpoint_manager_latest_step": 2000,
+      "temporary_directories_remaining": 0,
       "params_metadata_readable": true,
       "train_state_metadata_readable": true,
       "asset_norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
@@ -140,6 +157,7 @@
     "norm_stats_complete": true,
     "training_started": true,
     "first_checkpoint_verified": true,
+    "periodic_checkpoint_verified": true,
     "training_complete": false,
     "final_checkpoint_verified": false
   }

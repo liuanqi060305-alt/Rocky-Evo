@@ -5,7 +5,7 @@
 ## 1. 本轮训练方案
 
 - 本轮按用户确认，联合训练“第一版实际使用的 54 条 + 2026-09-27 最新 50 条”，共 104 条。
-- 按完整位置条件划分 `train` 和 `test`，不要把同一位置随机拆分到两边。
+- 本轮 104 条全部进入 `train`，不在数据集内设置留出测试集；泛化性由后续真机位置分组测试。
 - 语言指令继续统一使用 `plug and unplug`。
 - 新建 LeRobot repo id：`xtrainer/plug_and_unplug_task_v2_104eps`。
 - 新建 OpenPI 配置：`pi05_xtrainer_full_v2_104eps`，超参数与学校 H100 第一版保持一致，只更换数据集 repo id。
@@ -51,9 +51,7 @@ pgrep -af run_control.py
 - 左右侧角度或位移；
 - `split=train` 或 `split=test`。
 
-如果所有位置都标为 `train`，模型可以使用全部数据，但之后不能把这些位置称为“未见位置泛化测试”。推荐至少保留一个完整位置条件作为 `test`，真机测试时只在该条件上评价泛化能力。
-
-未标注 episode 在转换器中会为了兼容历史数据被当成 `train`，因此正式转换前必须先处理当前未分类数据，不能依赖这个回退行为。
+本轮用户明确要求把新旧 104 条全部用于训练。最新 50 条暂无位置标签，但已通过显式选择清单纳入本轮 `train`；这不影响转换和训练，但训练后不能将它们所对应的位置宣称为“未见位置”。
 
 ### A3. 数据质量审查
 
@@ -90,7 +88,7 @@ python -m json.tool \
 不要把包含 188 条数据的共享目录直接交给平台转换。应根据版本库中的精确选择清单创建一个只含目标 104 条的隔离快照，排除训练不需要的 `replay.mp4`，并在快照内生成只列这 104 个 ID 的 `train_manifest.json`。其余 81 条 ±15° 数据和 3 条遗留未分类数据不进入本轮训练。
 
 ```bash
-DATE=$(date +%Y%m%d)
+DATE=20260927
 EPISODES=104
 SNAP="plug_v2_${EPISODES}eps_${DATE}"
 OUT="/home/iml/RockyEVO/data/processed/${SNAP}_raw.tar.zst"
@@ -98,7 +96,9 @@ SOURCE=/home/iml/RockyEVO/dobot_xtrainer/datasets/plug_and_unplug_task
 SELECTION=/home/iml/RockyEVO/dobot_xtrainer/dobot_xtrainer-master/config/dataset_annotations/plug_and_unplug_task_v2_104eps_20260927.json
 STAGE="/home/iml/RockyEVO/data/processed/${SNAP}_stage"
 
-rm -rf "$STAGE"
+test ! -e "$STAGE"
+test ! -e "$OUT"
+test ! -e "${OUT}.sha256"
 mkdir -p "$STAGE/plug_and_unplug_task/collect_data"
 
 python - "$SELECTION" "$SOURCE" "$STAGE/plug_and_unplug_task" <<'PY'
@@ -121,15 +121,23 @@ for episode_id in ids:
 shutil.copy2(selection_path, target / 'selection_manifest.json')
 PY
 
-tar --zstd -cf "$OUT" -C "$STAGE" \
+tar -I 'zstd -T0 -3' -cf "$OUT" -C "$STAGE" \
   --exclude='plug_and_unplug_task/collect_data/*/replay.mp4' \
   plug_and_unplug_task
 
 cd "$(dirname "$OUT")"
 sha256sum "$(basename "$OUT")" | tee "$(basename "$OUT").sha256"
+sha256sum -c "$(basename "$OUT").sha256"
 ```
 
 归档完成并校验后可以删除 `$STAGE`；其中的数据文件是本地硬链接，不会额外复制一份图像内容。用单个归档上传也能避免逐个传输大量小文件。
+
+2026-09-27 已实际生成并校验：
+
+- 归档：`/home/iml/RockyEVO/data/processed/plug_v2_104eps_20260927_raw.tar.zst`；
+- 大小：7,393,128,331 bytes（约 6.9 GiB）；
+- SHA-256：`dc6b74fec3f9f5e568fcf57068e1756c4d7c92036da7542057aaeec9c799fa8e`；
+- 归档内检查：104 个 Episode，无缺失、无额外 ID、无 `replay.mp4`，两份 manifest 均存在。
 
 ## 5. 阶段 C：上传到学校持久存储
 
@@ -150,16 +158,18 @@ bita upload \
   -e https://console.aicloud.szu.edu.cn \
   -b home \
   -c 1964608207239503873 \
-  -o "tm904895221620000/a1173895530/datasets/raw_snapshots/${SNAP}_raw.tar.zst" \
+  -o "tm904895221620000/a1173895530/datasets/raw_snapshots/" \
   -l "$OUT"
 
 bita upload \
   -e https://console.aicloud.szu.edu.cn \
   -b home \
   -c 1964608207239503873 \
-  -o "tm904895221620000/a1173895530/datasets/raw_snapshots/${SNAP}_raw.tar.zst.sha256" \
+  -o "tm904895221620000/a1173895530/datasets/raw_snapshots/" \
   -l "${OUT}.sha256"
 ```
+
+`bita upload` 的 `-o` 参数必须是以 `/` 结尾的远程目录，文件名会保留本地 basename。
 
 ## 6. 阶段 D：创建 H100 训练实例
 
@@ -225,7 +235,7 @@ info = json.loads((p / 'info.json').read_text())
 tasks = [json.loads(x) for x in (p / 'tasks.jsonl').read_text().splitlines()]
 print(info['total_episodes'], info['total_frames'], info['fps'])
 print(tasks)
-assert info['total_episodes'] > 0
+assert info['total_episodes'] == 104
 assert tasks == [{'task_index': 0, 'task': 'plug and unplug'}]
 PY
 ```
@@ -237,6 +247,14 @@ PY
 ```text
 repo_id = xtrainer/plug_and_unplug_task_v2_104eps
 ```
+
+已将这些增量改动保存为：
+
+```text
+config/openpi/pi05_xtrainer_full_v2_104eps.patch
+```
+
+该补丁适用于已有 X-Trainer V1 适配的 OpenPI 代码。在平台 OpenPI 根目录先执行 `git apply --check <补丁路径>`，通过后再执行 `git apply <补丁路径>`。如果配置名已存在，不要重复应用。
 
 然后重新计算 norm stats。数据变了就必须重算，不能复用 V1 的统计量。
 
@@ -326,12 +344,13 @@ WANDB_MODE=offline \
 
 ```bash
 CHECKPOINT_DIR="$BASE/checkpoints/pi05_xtrainer_full_v2_104eps/$EXP/29999" \
+POLICY_CONFIG=pi05_xtrainer_full_v2_104eps \
 PORT=8000 \
 DEFAULT_PROMPT='plug and unplug' \
 ./scripts/serve_xtrainer_szu.sh
 ```
 
-`serve_xtrainer_szu.sh` 当前默认写死 V1 配置，正式运行 V2 前需要先改成可通过环境变量指定 `POLICY_CONFIG`，否则即使目录指向 V2，也可能加载错误的 norm stats。
+`serve_xtrainer_szu.sh` 必须支持通过环境变量指定 `POLICY_CONFIG`，否则即使目录指向 V2，也可能加载错误的 norm stats。
 
 真机侧顺序：
 

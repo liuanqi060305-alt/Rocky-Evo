@@ -1,0 +1,56 @@
+--- a/src/openpi/training/config.py
++++ b/src/openpi/training/config.py
+@@ -884,2 +884,35 @@
+     ),
++    # V2 full fine-tuning: V1's 54 demonstrations plus the 50 demonstrations
++    # frozen on 2026-09-27. Keep every training hyperparameter identical to the
++    # V1 H100 run so the dataset change can be evaluated independently.
++    TrainConfig(
++        name="pi05_xtrainer_full_v2_104eps",
++        model=pi0_config.Pi0Config(pi05=True),
++        data=LeRobotXTrainerDataConfig(
++            repo_id="xtrainer/plug_and_unplug_task_v2_104eps",
++            base_config=DataConfig(prompt_from_task=True),
++        ),
++        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
++        lr_schedule=_optimizer.CosineDecaySchedule(
++            warmup_steps=1_000,
++            peak_lr=2.5e-5,
++            decay_steps=30_000,
++            decay_lr=2.5e-6,
++        ),
++        optimizer=_optimizer.AdamW(
++            b1=0.9,
++            b2=0.95,
++            eps=1e-8,
++            weight_decay=1e-10,
++            clip_gradient_norm=1.0,
++        ),
++        ema_decay=0.99,
++        seed=42,
++        batch_size=32,
++        num_workers=2,
++        num_train_steps=30_000,
++        log_interval=100,
++        save_interval=1_000,
++        keep_period=5_000,
++    ),
+     #
+--- a/scripts/train_xtrainer_szu.sh
++++ b/scripts/train_xtrainer_szu.sh
+@@ -8,3 +8,3 @@
+ if [[ -z "${BATCH_SIZE+x}" ]]; then
+-    if [[ "$TRAIN_CONFIG" == "pi05_xtrainer_full" ]]; then
++    if [[ "$TRAIN_CONFIG" == pi05_xtrainer_full* ]]; then
+         BATCH_SIZE=32
+--- a/scripts/serve_xtrainer_szu.sh
++++ b/scripts/serve_xtrainer_szu.sh
+@@ -6,2 +6,3 @@
+ CHECKPOINT_DIR="${CHECKPOINT_DIR:-${SZU_ACCOUNT_ROOT}/openpi训练/checkpoints/pi05_xtrainer_full/plug_v1_54eps_full_h100/29999}"
++POLICY_CONFIG="${POLICY_CONFIG:-pi05_xtrainer_full}"
+ PORT="${PORT:-8000}"
+@@ -32,3 +33,3 @@
+     policy:checkpoint \
+-    --policy.config=pi05_xtrainer_full \
++    --policy.config="$POLICY_CONFIG" \
+     --policy.dir="$CHECKPOINT_DIR"

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "dataset_version": "plug_and_unplug_task_v2_104eps",
+  "selection_id": "v1_54_plus_latest50_20260927",
+  "created_at": "2026-09-27T22:27:35+08:00",
+  "archive_name": "plug_v2_104eps_20260927_raw.tar.zst",
+  "archive_size_bytes": 7393128331,
+  "archive_sha256": "dc6b74fec3f9f5e568fcf57068e1756c4d7c92036da7542057aaeec9c799fa8e",
+  "selection_manifest": "plug_and_unplug_task_v2_104eps_20260927.json",
+  "selection_manifest_sha256": "af6b9910174f8d61feecc2a911319dd31bde5244e109b3b319770ae1281dbf08",
+  "episode_count": 104,
+  "component_counts": {
+    "v1_baseline_54": 54,
+    "latest_50_20260927": 50
+  },
+  "excluded_episode_count": 84,
+  "archive_entry_count": 150264,
+  "replay_mp4_count": 0,
+  "verification": {
+    "sha256_check": "PASS",
+    "episode_id_set_check": "PASS",
+    "missing_episode_ids": [],
+    "extra_episode_ids": [],
+    "required_manifests_check": "PASS"
+  },
+  "local_archive_path": "/home/iml/RockyEVO/data/processed/plug_v2_104eps_20260927_raw.tar.zst",
+  "upload_status": "pending_platform_connection"
+}

@@ -62,10 +62,10 @@
     "launched_at": "2026-09-28T01:37:23+08:00",
     "first_step_at": "2026-09-28T01:41:48+08:00",
     "latest_observation": {
-      "observed_at": "2026-09-28T03:51:00+08:00",
-      "step": 5070,
-      "latest_logged_loss_step": 5000,
-      "latest_logged_loss": 0.0064,
+      "observed_at": "2026-09-28T04:16:30+08:00",
+      "step": 6090,
+      "latest_logged_loss_step": 6000,
+      "latest_logged_loss": 0.0058,
       "step_0_loss": 0.082,
       "rate_seconds_per_step": 1.5,
       "gpu_utilization_percent": 100,
@@ -111,7 +111,23 @@
       "params_metadata_readable": true,
       "train_state_metadata_readable": true,
       "asset_norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
-      "retention_after_step_6000": "pending",
+      "retention_after_step_6000": true,
+      "retention_verified_at": "2026-09-28T04:16:31+08:00",
+      "verified": true
+    },
+    "latest_rolling_checkpoint": {
+      "step": 6000,
+      "finalized_at": "2026-09-28T04:16:31+08:00",
+      "size_gib": 42,
+      "checkpoint_manager_all_steps": [
+        5000,
+        6000
+      ],
+      "checkpoint_manager_latest_step": 6000,
+      "temporary_directories_remaining": 0,
+      "params_metadata_readable": true,
+      "train_state_metadata_readable": true,
+      "asset_norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
       "verified": true
     }
   },
@@ -174,6 +190,7 @@
     "first_checkpoint_verified": true,
     "periodic_checkpoint_verified": true,
     "first_retained_checkpoint_verified": true,
+    "retention_policy_verified": true,
     "training_complete": false,
     "final_checkpoint_verified": false
   }

@@ -4,15 +4,15 @@
 
 ## 1. 本轮训练方案
 
-- 训练数据默认采用“第一版 54 条 + 审查通过的新训练集数据”，避免只训练新数据造成原始位置能力遗忘。
+- 本轮按用户确认，联合训练“第一版实际使用的 54 条 + 2026-09-27 最新 50 条”，共 104 条。
 - 按完整位置条件划分 `train` 和 `test`，不要把同一位置随机拆分到两边。
 - 语言指令继续统一使用 `plug and unplug`。
-- 新建 LeRobot repo id：`xtrainer/plug_and_unplug_task_v2`。
-- 新建 OpenPI 配置：`pi05_xtrainer_full_v2`，超参数与学校 H100 第一版保持一致，只更换数据集 repo id。
+- 新建 LeRobot repo id：`xtrainer/plug_and_unplug_task_v2_104eps`。
+- 新建 OpenPI 配置：`pi05_xtrainer_full_v2_104eps`，超参数与学校 H100 第一版保持一致，只更换数据集 repo id。
 - 新建实验名，不覆盖 `plug_v1_54eps_full_h100`。
 - 从 `pi05_base` 开始一轮新的 30000-step 全量微调；旧 V1 的 `29999` 不作为 `--resume` 目标。
 
-选择重新从基座训练，是为了让 V1 和 V2 可以公平比较。`--resume` 只用于 V2 训练意外中断后，继续同一个 V2 实验目录。
+选择重新从基座训练，是为了让 V1 和 104 条联合数据模型可以公平比较。第一版 54 条继续进入训练，可以降低只训练新数据导致原始位置能力遗忘的风险。`--resume` 只用于本轮训练意外中断后继续同一实验目录。
 
 ## 2. 当前数据状态（2026-09-27 22:12 检查）
 
@@ -24,6 +24,7 @@
 - 另有 53 条没有位置标签，其中包含 2026-09-27 新采的 50 条和此前 3 条未分类数据。
 - 当前 `train_manifest.json` 仍只包含第一版 54 条；现在直接转换只会得到旧数据集。
 - 随后采集进程已正常退出，最终稳定在 188 条；最后一条为 288 帧。
+- 最新 50 条范围为 `20260927214040` 至 `20260927221230`，已经全部人工标记为 `success=true`；`valid` 保持 `null`。
 - 已对 134 条 `valid=null` 数据完成只读审查：`PASS=82`、`FAIL=52`，没有写回任何状态。
 - 52 条失败只涉及两类阈值：39 条少于 300 帧，27 条存在大于 0.35rad（20°）的单帧动作跳变，其中 14 条同时命中两类；没有发现图像损坏、模态帧号错位或 NaN/Inf。
 
@@ -64,47 +65,71 @@ export XTRAINER_TASK_NAME=plug_and_unplug_task
 # 先只读审查，不写状态
 python scripts/manage_episodes.py --task plug_and_unplug_task audit-pending --no-write
 
-# 人工查看报告并决定阈值命中数据是否保留后，再正式审查并生成训练白名单
-python scripts/manage_episodes.py --task plug_and_unplug_task build-train-manifest
+# 本轮不要在共享 Raw 目录直接运行 build-train-manifest：它不能表达“旧版54条+最新50条”。
+# 精确训练白名单见版本库中的 104eps selection manifest。
 ```
 
 审查失败只会写 `valid=false`，不会自动删除。本轮只读审查中的 52 条阈值失败不能直接等同于坏示范：短轨迹可能是高效完成任务，动作跳变也可能是正常快速操作。需要结合回放、跳变所在关节、任务是否完成，以及各位置组数量平衡逐条复核。也不要为了凑数量未经查看就批量改成 `valid=true`。
 
-按照当前严格阈值，最终训练集会是旧 54 条加 82 条新 PASS，共 136 条；人工复核保留部分阈值命中数据后，数量会增加。四个位置组必须分别统计，避免某一组因为短轨迹较多而被系统性少采样。
+最新 50 条中严格阈值结果为 PASS 37、FAIL 13。用户已经明确将这 50 条全部与旧版 54 条联合训练；`success=true` 不等于 `valid=true`，因此 13 条阈值命中数据及原因会继续保留在选择清单中，供结果解释和复查。
 
 生成后检查：
 
 ```bash
 python scripts/manage_episodes.py --task plug_and_unplug_task list
 python scripts/check_episodes.py
-python tools/gen_dataset_manifest.py \
-  --task plug_and_unplug_task \
-  --notes "V2：第一版54条加位置泛化新数据；训练前冻结快照"
+python -m json.tool \
+  config/dataset_annotations/plug_and_unplug_task_v2_104eps_20260927.json \
+  >/dev/null
 ```
 
 必须记录最终四个数字：Raw 总数、训练集数量、测试集数量、排除数量。
 
 ## 4. 阶段 B：创建不可变 Raw 快照
 
-不要把仍会继续采集的目录直接交给平台转换。生成一个带日期和 episode 数量的快照，排除训练不需要的 `replay.mp4`，同时保留 `meta.json`、`train_manifest.json` 和 `dataset_manifest.json`。
+不要把包含 188 条数据的共享目录直接交给平台转换。应根据版本库中的精确选择清单创建一个只含目标 104 条的隔离快照，排除训练不需要的 `replay.mp4`，并在快照内生成只列这 104 个 ID 的 `train_manifest.json`。其余 81 条 ±15° 数据和 3 条遗留未分类数据不进入本轮训练。
 
 ```bash
 DATE=$(date +%Y%m%d)
-EPISODES=188  # 示例；替换成停止采集并审查后的实际 Raw 总数
+EPISODES=104
 SNAP="plug_v2_${EPISODES}eps_${DATE}"
 OUT="/home/iml/RockyEVO/data/processed/${SNAP}_raw.tar.zst"
+SOURCE=/home/iml/RockyEVO/dobot_xtrainer/datasets/plug_and_unplug_task
+SELECTION=/home/iml/RockyEVO/dobot_xtrainer/dobot_xtrainer-master/config/dataset_annotations/plug_and_unplug_task_v2_104eps_20260927.json
+STAGE="/home/iml/RockyEVO/data/processed/${SNAP}_stage"
 
-cd /home/iml/RockyEVO/dobot_xtrainer/datasets
-tar --zstd -cf "$OUT" \
+rm -rf "$STAGE"
+mkdir -p "$STAGE/plug_and_unplug_task/collect_data"
+
+python - "$SELECTION" "$SOURCE" "$STAGE/plug_and_unplug_task" <<'PY'
+import json, os, pathlib, shutil, sys
+selection_path, source, target = map(pathlib.Path, sys.argv[1:])
+selection = json.loads(selection_path.read_text())
+ids = [row['episode_id'] for row in selection['episodes']]
+assert len(ids) == 104 and len(set(ids)) == 104
+for episode_id in ids:
+    src = source / 'collect_data' / episode_id
+    dst = target / 'collect_data' / episode_id
+    assert src.is_dir()
+    shutil.copytree(src, dst, copy_function=os.link)
+(target / 'train_manifest.json').write_text(json.dumps({
+    'dataset_version': 'plug_and_unplug_task_v2_104eps',
+    'generator': 'explicit_selection_manifest',
+    'episode_count': len(ids),
+    'episodes': ids,
+}, ensure_ascii=False, indent=2) + '\n')
+shutil.copy2(selection_path, target / 'selection_manifest.json')
+PY
+
+tar --zstd -cf "$OUT" -C "$STAGE" \
   --exclude='plug_and_unplug_task/collect_data/*/replay.mp4' \
-  --exclude='plug_and_unplug_task/position_views' \
   plug_and_unplug_task
 
 cd "$(dirname "$OUT")"
 sha256sum "$(basename "$OUT")" | tee "$(basename "$OUT").sha256"
 ```
 
-Raw 中约 1.24GB 是 `replay.mp4`，转换器不会读取它们。用单个归档上传也能避免传输约 25 万个小文件。
+归档完成并校验后可以删除 `$STAGE`；其中的数据文件是本地硬链接，不会额外复制一份图像内容。用单个归档上传也能避免逐个传输大量小文件。
 
 ## 5. 阶段 C：上传到学校持久存储
 
@@ -183,7 +208,7 @@ HF_DATASETS_OFFLINE=1 \
 UV_OFFLINE=1 \
 .venv/bin/python examples/xtrainer/convert_xtrainer_data_to_lerobot.py \
   --raw-dir "$RAW" \
-  --repo-id xtrainer/plug_and_unplug_task_v2 \
+  --repo-id xtrainer/plug_and_unplug_task_v2_104eps \
   --generalization-split train \
   --prompt 'plug and unplug' \
   2>&1 | tee "$BASE/logs/${SNAP}_convert.log"
@@ -195,7 +220,7 @@ UV_OFFLINE=1 \
 .venv/bin/python - <<'PY'
 from pathlib import Path
 import json
-p = Path('/share/home/tm904895221620000/a1173895530/openpi训练/hf_lerobot/xtrainer/plug_and_unplug_task_v2/meta')
+p = Path('/share/home/tm904895221620000/a1173895530/openpi训练/hf_lerobot/xtrainer/plug_and_unplug_task_v2_104eps/meta')
 info = json.loads((p / 'info.json').read_text())
 tasks = [json.loads(x) for x in (p / 'tasks.jsonl').read_text().splitlines()]
 print(info['total_episodes'], info['total_frames'], info['fps'])
@@ -207,10 +232,10 @@ PY
 
 ## 8. 阶段 F：V2 配置与归一化统计
 
-正式运行前，`config.py` 中必须存在 `pi05_xtrainer_full_v2`，其模型、优化器和超参数与 `pi05_xtrainer_full` 相同，唯一的数据差异是：
+正式运行前，`config.py` 中必须存在 `pi05_xtrainer_full_v2_104eps`，其模型、优化器和超参数与 `pi05_xtrainer_full` 相同，唯一的数据差异是：
 
 ```text
-repo_id = xtrainer/plug_and_unplug_task_v2
+repo_id = xtrainer/plug_and_unplug_task_v2_104eps
 ```
 
 然后重新计算 norm stats。数据变了就必须重算，不能复用 V1 的统计量。
@@ -219,15 +244,15 @@ repo_id = xtrainer/plug_and_unplug_task_v2
 BASE=/share/home/tm904895221620000/a1173895530/openpi训练
 cd "$BASE/openpi"
 
-TRAIN_CONFIG=pi05_xtrainer_full_v2 \
+TRAIN_CONFIG=pi05_xtrainer_full_v2_104eps \
 ./scripts/compute_norm_stats_xtrainer_szu.sh \
-  2>&1 | tee "$BASE/logs/plug_v2_norm_stats.log"
+  2>&1 | tee "$BASE/logs/plug_v2_104eps_norm_stats.log"
 ```
 
 检查文件存在且不是 V1 路径：
 
 ```bash
-test -f "$BASE/openpi/assets/pi05_xtrainer_full_v2/xtrainer/plug_and_unplug_task_v2/norm_stats.json"
+test -f "$BASE/openpi/assets/pi05_xtrainer_full_v2_104eps/xtrainer/plug_and_unplug_task_v2_104eps/norm_stats.json"
 ```
 
 ## 9. 阶段 G：启动 H100 全量微调
@@ -240,13 +265,13 @@ test -f "$BASE/openpi/assets/pi05_xtrainer_full_v2/xtrainer/plug_and_unplug_task
 BASE=/share/home/tm904895221620000/a1173895530/openpi训练
 cd "$BASE/openpi"
 
-TRAIN_EPISODES=185  # 示例；替换成转换后 info.json 中的 total_episodes
+TRAIN_EPISODES=104  # 必须与转换后 info.json 中的 total_episodes 一致
 DATE=20260927       # 使用本轮冻结数据的日期
 EXP="plug_v2_${TRAIN_EPISODES}eps_full_h100_${DATE}"
 mkdir -p "$BASE/logs" "$BASE/run"
 
 nohup setsid env \
-  TRAIN_CONFIG=pi05_xtrainer_full_v2 \
+  TRAIN_CONFIG=pi05_xtrainer_full_v2_104eps \
   EXP_NAME="$EXP" \
   BATCH_SIZE=32 \
   WANDB_MODE=offline \
@@ -276,7 +301,7 @@ loss 应整体下降，但单个训练 loss 不能证明真机成功率。出现
 实例意外结束后，在同一个实验名下续训：
 
 ```bash
-TRAIN_CONFIG=pi05_xtrainer_full_v2 \
+TRAIN_CONFIG=pi05_xtrainer_full_v2_104eps \
 EXP_NAME="$EXP" \
 BATCH_SIZE=32 \
 WANDB_MODE=offline \
@@ -290,7 +315,7 @@ WANDB_MODE=offline \
 1. 日志走完 30000 steps，末尾没有 traceback；
 2. 训练进程正常退出；
 3. checkpoint 目录中存在最终步目录，按当前实现通常为 `29999`；
-4. `params`、`train_state`、`assets/xtrainer/plug_and_unplug_task_v2/norm_stats.json` 均存在；
+4. `params`、`train_state`、`assets/xtrainer/plug_and_unplug_task_v2_104eps/norm_stats.json` 均存在；
 5. 保留转换日志、训练日志、Raw SHA256 和最终 manifest。
 
 ## 11. 阶段 I：checkpoint 服务和真机评测
@@ -300,7 +325,7 @@ WANDB_MODE=offline \
 服务端的配置和 checkpoint 必须同时使用 V2：
 
 ```bash
-CHECKPOINT_DIR="$BASE/checkpoints/pi05_xtrainer_full_v2/$EXP/29999" \
+CHECKPOINT_DIR="$BASE/checkpoints/pi05_xtrainer_full_v2_104eps/$EXP/29999" \
 PORT=8000 \
 DEFAULT_PROMPT='plug and unplug' \
 ./scripts/serve_xtrainer_szu.sh
@@ -332,7 +357,7 @@ Codex 可以完成：
 - 扫描并审查全部 episode，逐条汇总异常，按确认后的规则补齐标签；
 - 生成并校验 `train_manifest.json`、`dataset_manifest.json` 和版本化标签清单；
 - 创建去除 replay 的 Raw 快照、SHA256，并执行 Bita 上传；
-- 增加 `pi05_xtrainer_full_v2` 配置，并让训练、norm stats、服务脚本支持 V2；
+- 增加 `pi05_xtrainer_full_v2_104eps` 配置，并让训练、norm stats、服务脚本支持 V2；
 - 登录已创建的实例，校验挂载、解包、转换 LeRobot、核对 episode/frame/prompt；
 - 计算 norm stats、启动训练、持续检查 loss、GPU、checkpoint 和异常；
 - 在中断后安全续训，训练完成后验证 checkpoint 完整性；

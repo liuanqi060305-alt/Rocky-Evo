@@ -1,0 +1,733 @@
+{
+  "schema_version": 1,
+  "dataset_version": "plug_and_unplug_task",
+  "selection_id": "latest50_20260927",
+  "created_at": "2026-09-27T22:22:38+08:00",
+  "purpose": "记录2026-09-27最新50条训练子集；最终与第一版54条联合组成104条V2训练集。",
+  "selection_rule": "按episode_id时间戳升序排列后取最后50条；创建时Raw总数为188。",
+  "episode_count": 50,
+  "first_episode_id": "20260927214040",
+  "last_episode_id": "20260927221230",
+  "training_selected": true,
+  "success_label": {
+    "value": true,
+    "source": "manual",
+    "count": 50
+  },
+  "valid_status": {
+    "value": null,
+    "count": 50,
+    "note": "success与valid独立；本次只按用户要求标记success。"
+  },
+  "read_only_audit_summary": {
+    "pass": 37,
+    "fail": 13,
+    "note": "审查没有写回valid；用户当前训练选择仍为全部50条。",
+    "report": "data/rejected/plug_and_unplug_task/pretrain_audit_dry_run_20260927.log"
+  },
+  "episodes": [
+    {
+      "episode_id": "20260927214040",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.1731 rad，帧: 316 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214115",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 2 处，最大 0.4138 rad，帧: 321, 325"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214151",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2531 rad，帧: 282, 284, 285 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214223",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 11 处，最大 0.3463 rad，帧: 196, 271, 272, 273, 274... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214337",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4164 rad，帧: 296"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214413",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2424 rad，帧: 346, 351, 352 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214453",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2160 rad，帧: 306, 361 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214532",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214607",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2084 rad，帧: 82, 290 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214651",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2454 rad，帧: 250, 251, 253 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214723",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214757",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.1887 rad，帧: 313, 316 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214834",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 7 处，最大 0.2777 rad，帧: 104, 290, 292, 294, 295... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214909",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.1749 rad，帧: 293 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214946",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215025",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 4 处，最大 0.2132 rad，帧: 180, 251, 254, 255 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215058",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2347 rad，帧: 90, 93, 302 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215135",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.2468 rad，帧: 230, 342, 343, 344, 345... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215214",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2316 rad，帧: 110, 303, 304, 305, 306 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215344",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 8 处，最大 0.3484 rad，帧: 276, 277, 278, 280, 281... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215420",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4126 rad，帧: 277"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215456",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2142 rad，帧: 253, 254, 255 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215529",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 2 处，最大 0.4415 rad，帧: 310, 312"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215627",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2309 rad，帧: 89, 285, 288, 289, 290 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215701",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 7 处，最大 0.2860 rad，帧: 296, 297, 298, 299, 300... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215737",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215813",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.3283 rad，帧: 189, 280, 281, 284, 285 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215846",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2387 rad，帧: 309, 311, 312 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215916",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.3267 rad，帧: 293, 294, 295, 296, 335 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215949",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2270 rad，帧: 174, 266, 269, 270, 271 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220024",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 7 处，最大 0.3358 rad，帧: 172, 173, 176, 260, 261... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220059",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 294 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.3574 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927220206",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.1838 rad，帧: 156 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220244",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.3681 rad，帧: 299"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927220322",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.2376 rad，帧: 61 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220358",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.2457 rad，帧: 185, 254, 256, 257, 258... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220509",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2823 rad，帧: 75, 248, 249, 250, 251 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220549",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 298 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4097 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927220628",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2101 rad，帧: 306, 362 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220710",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2592 rad，帧: 170, 175, 236, 238, 242 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220747",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2025 rad，帧: 277, 278, 321 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220821",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.2584 rad，帧: 179, 250, 251, 252, 253... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220858",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2454 rad，帧: 198, 284, 286, 289, 290 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220933",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 283 超出合理区间 [300, 800]"
+        ],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2119 rad，帧: 228, 229 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927221004",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 296 超出合理区间 [300, 800]"
+        ],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 4 处，最大 0.3003 rad，帧: 78, 222, 223, 224 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927221033",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 283 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4080 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927221102",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.3421 rad，帧: 159, 160, 228, 229, 230... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927221131",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4302 rad，帧: 253"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927221202",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 284 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.3832 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927221230",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 288 超出合理区间 [300, 800]"
+        ],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 4 处，最大 0.3174 rad，帧: 218, 219, 221, 222 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    }
+  ],
+  "component_of": "plug_and_unplug_task_v2_104eps_20260927.json"
+}

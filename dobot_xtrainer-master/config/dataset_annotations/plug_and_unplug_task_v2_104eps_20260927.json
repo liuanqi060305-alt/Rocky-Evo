@@ -1,0 +1,1404 @@
+{
+  "schema_version": 1,
+  "dataset_version": "plug_and_unplug_task_v2_104eps",
+  "selection_id": "v1_54_plus_latest50_20260927",
+  "created_at": "2026-09-27T22:23:52+08:00",
+  "purpose": "联合训练第一版实际使用的54条数据与2026-09-27最新50条数据。",
+  "training_repo_id": "xtrainer/plug_and_unplug_task_v2_104eps",
+  "episode_count": 104,
+  "components": [
+    {
+      "name": "v1_baseline_54",
+      "count": 54,
+      "source": "plug_and_unplug_task_v1_position_labels.json"
+    },
+    {
+      "name": "latest_50_20260927",
+      "count": 50,
+      "source": "plug_and_unplug_task_latest50_20260927.json"
+    }
+  ],
+  "selection_policy": {
+    "include": "第一版54条 + 当前最新50条",
+    "exclude": "其余81条±15度位置数据和3条遗留未分类数据",
+    "raw_episode_count_at_selection": 188,
+    "excluded_count": 84
+  },
+  "quality_note": "第一版54条valid=true；最新50条valid=null，已人工标记success=true。只读审查为PASS 37、FAIL 13，但用户明确选择50条全部进入本轮联合训练。",
+  "episodes": [
+    {
+      "episode_id": "20260915234000",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234053",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234130",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234210",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234257",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234337",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234423",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234502",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234541",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234709",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234753",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234837",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915234919",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235001",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235046",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235128",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235206",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235242",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235321",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235401",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260915235442",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173212",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173259",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173338",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173428",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173510",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173548",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173622",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173708",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173750",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173831",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173909",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919173956",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919174049",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919174130",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919174211",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919174252",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919174347",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919174429",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919175813",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919175938",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180024",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180110",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180150",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180228",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180315",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180359",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180441",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180521",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180611",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180655",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180735",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180812",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260919180849",
+      "component": "v1_baseline_54",
+      "success": true,
+      "success_source": "implicit_retained",
+      "valid": true,
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度"
+    },
+    {
+      "episode_id": "20260927214040",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.1731 rad，帧: 316 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214115",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 2 处，最大 0.4138 rad，帧: 321, 325"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214151",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2531 rad，帧: 282, 284, 285 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214223",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 11 处，最大 0.3463 rad，帧: 196, 271, 272, 273, 274... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214337",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4164 rad，帧: 296"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214413",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2424 rad，帧: 346, 351, 352 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214453",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2160 rad，帧: 306, 361 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214532",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214607",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2084 rad，帧: 82, 290 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214651",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2454 rad，帧: 250, 251, 253 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214723",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927214757",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.1887 rad，帧: 313, 316 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214834",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 7 处，最大 0.2777 rad，帧: 104, 290, 292, 294, 295... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214909",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.1749 rad，帧: 293 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927214946",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215025",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 4 处，最大 0.2132 rad，帧: 180, 251, 254, 255 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215058",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2347 rad，帧: 90, 93, 302 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215135",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.2468 rad，帧: 230, 342, 343, 344, 345... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215214",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2316 rad，帧: 110, 303, 304, 305, 306 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215344",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 8 处，最大 0.3484 rad，帧: 276, 277, 278, 280, 281... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215420",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4126 rad，帧: 277"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215456",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2142 rad，帧: 253, 254, 255 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215529",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 2 处，最大 0.4415 rad，帧: 310, 312"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215627",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2309 rad，帧: 89, 285, 288, 289, 290 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215701",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 7 处，最大 0.2860 rad，帧: 296, 297, 298, 299, 300... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215737",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927215813",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.3283 rad，帧: 189, 280, 281, 284, 285 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215846",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2387 rad，帧: 309, 311, 312 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215916",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.3267 rad，帧: 293, 294, 295, 296, 335 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927215949",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2270 rad，帧: 174, 266, 269, 270, 271 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220024",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 7 处，最大 0.3358 rad，帧: 172, 173, 176, 260, 261... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220059",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 294 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.3574 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927220206",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.1838 rad，帧: 156 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220244",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.3681 rad，帧: 299"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927220322",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.2376 rad，帧: 61 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220358",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.2457 rad，帧: 185, 254, 256, 257, 258... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220509",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2823 rad，帧: 75, 248, 249, 250, 251 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220549",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 298 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4097 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927220628",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2101 rad，帧: 306, 362 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220710",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2592 rad，帧: 170, 175, 236, 238, 242 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220747",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 3 处，最大 0.2025 rad，帧: 277, 278, 321 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220821",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.2584 rad，帧: 179, 250, 251, 252, 253... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220858",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 5 处，最大 0.2454 rad，帧: 198, 284, 286, 289, 290 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927220933",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 283 超出合理区间 [300, 800]"
+        ],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2119 rad，帧: 228, 229 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927221004",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 296 超出合理区间 [300, 800]"
+        ],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 4 处，最大 0.3003 rad，帧: 78, 222, 223, 224 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927221033",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 283 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4080 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927221102",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 6 处，最大 0.3421 rad，帧: 159, 160, 228, 229, 230... —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    },
+    {
+      "episode_id": "20260927221131",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4302 rad，帧: 253"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927221202",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 284 超出合理区间 [300, 800]",
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.3832 rad，帧: 232"
+        ],
+        "warnings": []
+      }
+    },
+    {
+      "episode_id": "20260927221230",
+      "component": "latest_50_20260927",
+      "success": true,
+      "success_source": "manual",
+      "valid": null,
+      "position_id": null,
+      "description": null,
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "帧数 288 超出合理区间 [300, 800]"
+        ],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 4 处，最大 0.3174 rad，帧: 218, 219, 221, 222 —— 快速人工操作的正常峰值，不判坏数据"
+        ]
+      }
+    }
+  ],
+  "excluded_episode_ids": [
+    "20260922002343",
+    "20260922002430",
+    "20260922002552",
+    "20260922002634",
+    "20260922002715",
+    "20260922002809",
+    "20260922002857",
+    "20260922002940",
+    "20260922003018",
+    "20260922003143",
+    "20260922003226",
+    "20260922003307",
+    "20260922003357",
+    "20260922003436",
+    "20260922003516",
+    "20260922003552",
+    "20260922003629",
+    "20260922003716",
+    "20260922003759",
+    "20260922003847",
+    "20260922003926",
+    "20260922004005",
+    "20260922004109",
+    "20260922004147",
+    "20260922004235",
+    "20260922004320",
+    "20260922004359",
+    "20260922004436",
+    "20260922004516",
+    "20260922004554",
+    "20260922004633",
+    "20260922004706",
+    "20260922004741",
+    "20260922004817",
+    "20260922004938",
+    "20260922005059",
+    "20260922005136",
+    "20260922005215",
+    "20260922005259",
+    "20260922005337",
+    "20260922005423",
+    "20260922005500",
+    "20260922010225",
+    "20260922010305",
+    "20260922010349",
+    "20260922010426",
+    "20260922010501",
+    "20260922010541",
+    "20260922010621",
+    "20260922010658",
+    "20260922010738",
+    "20260922010849",
+    "20260922010938",
+    "20260922011021",
+    "20260922011103",
+    "20260922011139",
+    "20260922011212",
+    "20260922011249",
+    "20260922011326",
+    "20260922011403",
+    "20260922011435",
+    "20260922011509",
+    "20260922011548",
+    "20260922011622",
+    "20260922011652",
+    "20260922011725",
+    "20260922011758",
+    "20260922011831",
+    "20260922011909",
+    "20260922011946",
+    "20260922012036",
+    "20260922012108",
+    "20260922012144",
+    "20260922012216",
+    "20260922012248",
+    "20260922012327",
+    "20260922012419",
+    "20260922012501",
+    "20260922012539",
+    "20260922012615",
+    "20260922012648",
+    "20260922012718",
+    "20260922012748",
+    "20260923000325"
+  ]
+}

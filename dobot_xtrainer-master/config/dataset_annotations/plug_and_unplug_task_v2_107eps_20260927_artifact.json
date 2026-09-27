@@ -25,6 +25,9 @@
     "required_manifests_check": "PASS"
   },
   "local_archive_path": "/home/iml/RockyEVO/data/processed/plug_v2_107eps_20260927_raw.tar.zst",
-  "upload_status": "pending_platform_connection",
-  "supersedes": "plug_and_unplug_task_v2_104eps"
+  "upload_status": "verified_on_szu_persistent_storage",
+  "supersedes": "plug_and_unplug_task_v2_104eps",
+  "platform_archive_path": "/share/home/tm904895221620000/a1173895530/datasets/raw_snapshots/plug_v2_107eps_20260927_raw.tar.zst",
+  "platform_verified_at": "2026-09-27T23:15:00+08:00",
+  "platform_task_id": "a21320001513844736213791"
 }

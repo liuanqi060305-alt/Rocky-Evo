@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "run_id": "plug_v2_107eps_full_h100_20260927_unlimited",
+  "status": "training_running",
+  "platform": {
+    "provider": "深圳大学智算中心",
+    "task_name": "rocky-vla-v2-107eps-h100-unlimited",
+    "task_id": "a21321230436265984874045",
+    "task_url": "https://console.aicloud.szu.edu.cn/console/task-debug/detail/a21321230436265984874045",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "image": "loongforge_pi0.5:loongforge-pi05",
+    "started_at": "2026-09-28T01:34:44+08:00",
+    "requested_duration": "unlimited"
+  },
+  "dataset": {
+    "repo_id": "xtrainer/plug_and_unplug_task_v2_107eps",
+    "episode_count": 107,
+    "frame_count": 38495,
+    "fps": 15,
+    "prompt": "plug and unplug",
+    "selection_manifest": "config/dataset_annotations/plug_and_unplug_task_v2_107eps_20260927.json",
+    "selection_manifest_sha256": "94f84f491611e103cb78cd67a45cd46de7867363d3b59dac8713442060218b52"
+  },
+  "raw_archive": {
+    "name": "plug_v2_107eps_20260927_raw.tar.zst",
+    "size_bytes": 7608672943,
+    "sha256": "64c00c866af126c48568f74484dd90e52b2ea63166f0d386f843778c3ed2dee0",
+    "platform_path": "/share/home/tm904895221620000/a1173895530/datasets/raw_snapshots/plug_v2_107eps_20260927_raw.tar.zst",
+    "platform_sha256_verified": true
+  },
+  "runtime_paths": {
+    "openpi_root": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi",
+    "raw_snapshot": "/root/xtrainer_snapshots/plug_v2_107eps_20260927/plug_and_unplug_task",
+    "lerobot_home": "/root/hf_lerobot_v2_107",
+    "checkpoint_base": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints",
+    "log_root": "/share/home/tm904895221620000/a1173895530/openpi训练/logs",
+    "persistent_lerobot_dataset": "/share/home/tm904895221620000/a1173895530/openpi训练/hf_lerobot/xtrainer/plug_and_unplug_task_v2_107eps",
+    "norm_stats": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi/assets/pi05_xtrainer_full_v2_107eps/xtrainer/plug_and_unplug_task_v2_107eps/norm_stats.json",
+    "training_log": "/share/home/tm904895221620000/a1173895530/openpi训练/logs/plug_v2_107eps_full_h100_20260927_unlimited.log",
+    "checkpoint_dir": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints/pi05_xtrainer_full_v2_107eps/plug_v2_107eps_full_h100_20260927_unlimited"
+  },
+  "training": {
+    "config": "pi05_xtrainer_full_v2_107eps",
+    "experiment": "plug_v2_107eps_full_h100_20260927_unlimited",
+    "base_weights": "pi05_base",
+    "batch_size": 32,
+    "num_train_steps": 30000,
+    "seed": 42,
+    "num_workers": 2,
+    "optimizer": "AdamW",
+    "learning_rate": {
+      "schedule": "cosine_decay",
+      "warmup_steps": 1000,
+      "peak": 2.5e-05,
+      "final": 2.5e-06,
+      "decay_steps": 30000
+    },
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.99,
+    "save_interval": 1000,
+    "keep_period": 5000,
+    "launched_at": "2026-09-28T01:37:23+08:00",
+    "first_step_at": "2026-09-28T01:41:48+08:00",
+    "latest_observation": {
+      "observed_at": "2026-09-28T01:46:37+08:00",
+      "step": 183,
+      "latest_logged_loss_step": 100,
+      "latest_logged_loss": 0.0536,
+      "step_0_loss": 0.082,
+      "rate_seconds_per_step": 1.5,
+      "gpu_utilization_percent": 100,
+      "gpu_memory_mib": 73643
+    }
+  },
+  "conversion": {
+    "completed": true,
+    "converted_episodes": 107,
+    "skipped_episodes": 0,
+    "errors": 0,
+    "frame_count": 38495,
+    "file_count": 111,
+    "persistent_size_gb": 31
+  },
+  "normalization": {
+    "completed": true,
+    "batch_count": 1202,
+    "norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
+    "keys": [
+      "state",
+      "actions"
+    ],
+    "dimensions": 14,
+    "finite_values_verified": true,
+    "positive_standard_deviations_verified": true
+  },
+  "previous_attempt": {
+    "task_name": "rocky-vla-v2-107eps-h100",
+    "task_id": "a21320001513844736213791",
+    "experiment": "plug_v2_107eps_full_h100_20260927",
+    "reason_stopped": "12小时任务时限不足以覆盖数据准备和约12.2小时训练，首个checkpoint前主动终止并切换到不限时任务",
+    "last_step": 300,
+    "last_loss": 0.0222,
+    "checkpoint_created": false,
+    "platform_stopped_at": "2026-09-28T01:45:52+08:00"
+  },
+  "milestones": {
+    "raw_archive_uploaded": true,
+    "raw_archive_verified": true,
+    "raw_snapshot_verified": true,
+    "lerobot_conversion_complete": true,
+    "norm_stats_complete": true,
+    "training_started": true,
+    "training_complete": false,
+    "final_checkpoint_verified": false
+  }
+}

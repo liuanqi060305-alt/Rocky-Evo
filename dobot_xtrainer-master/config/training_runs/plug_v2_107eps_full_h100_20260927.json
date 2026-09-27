@@ -104,6 +104,24 @@
     "finite_values_verified": true,
     "positive_standard_deviations_verified": true
   },
+  "monitoring": {
+    "persistent_watchdog_started_at": "2026-09-28T02:20:06+08:00",
+    "persistent_watchdog_pid": 3880,
+    "poll_seconds": 300,
+    "script": "/share/home/tm904895221620000/a1173895530/openpi训练/run/watch_plug_v2_107eps.py",
+    "live_status": "/share/home/tm904895221620000/a1173895530/openpi训练/run/plug_v2_107eps_full_h100_20260927_unlimited.watch_status.json",
+    "final_report": "/share/home/tm904895221620000/a1173895530/openpi训练/run/plug_v2_107eps_full_h100_20260927_unlimited.final_verification.json",
+    "automatic_final_checks": [
+      "final step logged",
+      "finite metrics",
+      "checkpoint 29999 present",
+      "no temporary checkpoint directories",
+      "required checkpoint files present",
+      "normalization hash matches",
+      "Orbax metadata readable",
+      "no fatal log markers"
+    ]
+  },
   "previous_attempt": {
     "task_name": "rocky-vla-v2-107eps-h100",
     "task_id": "a21320001513844736213791",

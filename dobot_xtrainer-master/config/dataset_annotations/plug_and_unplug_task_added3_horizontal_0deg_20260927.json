@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "dataset_version": "plug_and_unplug_task",
+  "selection_id": "added_3_horizontal_0deg_20260927",
+  "created_at": "2026-09-27T22:45:55+08:00",
+  "purpose": "将此前未标注的3条人工回放确认为左右均水平0度，并纳入V2联合训练。",
+  "episode_count": 3,
+  "training_selected": true,
+  "position_label": {
+    "factor": "object_position",
+    "object": "both_sides",
+    "position_id": "both_horizontal_0deg",
+    "description": "左右均水平0度",
+    "reference_frame": "table_reference",
+    "yaw_deg": 0.0,
+    "split": "train"
+  },
+  "review_note": "人工逐条回放确认任务成功且数据可用。其中20260922002430命中单帧动作跳变阈值，已保留自动审查结果并由人工覆盖为valid=true。",
+  "episodes": [
+    {
+      "episode_id": "20260922002343",
+      "success": true,
+      "success_source": "manual",
+      "valid": true,
+      "valid_source": "manual_review",
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度",
+      "split": "train",
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 1 处，最大 0.2122 rad，帧: 208"
+        ]
+      },
+      "manual_review_decision": "accept"
+    },
+    {
+      "episode_id": "20260922002430",
+      "success": true,
+      "success_source": "manual",
+      "valid": true,
+      "valid_source": "manual_review",
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度",
+      "split": "train",
+      "read_only_audit": {
+        "status": "FAIL",
+        "errors": [
+          "action 关节增量超过 0.35 rad (20°) 的位置 1 处，最大 0.4172 rad，帧: 281"
+        ],
+        "warnings": []
+      },
+      "manual_review_decision": "accept"
+    },
+    {
+      "episode_id": "20260923000325",
+      "success": true,
+      "success_source": "manual",
+      "valid": true,
+      "valid_source": "manual_review",
+      "position_id": "both_horizontal_0deg",
+      "description": "左右均水平0度",
+      "split": "train",
+      "read_only_audit": {
+        "status": "PASS",
+        "errors": [],
+        "warnings": [
+          "action 关节增量超过 0.17 rad (10°) 的位置 2 处，最大 0.2284 rad，帧: 164, 280"
+        ]
+      },
+      "manual_review_decision": "accept"
+    }
+  ]
+}

@@ -50,6 +50,17 @@ from scripts.manipulate_utils import load_ini_data_camera
 
 
 CONTROL_PERIOD_S = 0.04
+# 保留原先触发 y 提示的 0.17rad 阈值和 y 之后的平滑插值行为。自动模式只
+# 消除人工等待；不放大单步指令，也不改写模型动作。25deg 覆盖当前 20 条成功
+# rollout 中观察到的最大值 21.97deg，超出该范围仍会拒绝当前动作。
+JOINT_JUMP_WARNING_RAD = 0.17
+AUTO_SMOOTH_JOINT_JUMP_MAX_DEG = 25.0
+
+# 原 XYZ 保护要求两臂 Z>42mm。现有成功轨迹会在右臂插接阶段稳定进入
+# 33.82--42mm；只把“其余五个方向均正常、且仅右臂 Z 在 30--42mm”识别为
+# 已验证的任务区。其它 XYZ 越界仍会终止当前 rollout。
+WORKSPACE_Z_MIN_MM = 42.0
+RIGHT_INSERTION_Z_FLOOR_MM = 30.0
 # Per-dimension median of frame-0 control targets from the 54 episodes used by
 # plug_v1_54eps_full_h100. The former rounded pose put LJ5/RJ5 13.8/8.7 degrees
 # outside the demonstration start median and pushed both wrists beyond q01/q99.
@@ -108,6 +119,9 @@ class Args:
     # 每次按 r 开始新 rollout 前，自动经安全位回到统一初始位。
     reset_before_rollout: bool = True
     save_images: bool = True
+    # 默认自动处理历史成功轨迹中固定出现的 y/i 分支，使控制循环不等待人工按键。
+    # 调试或 A/B 对照时增加 --interactive-safety-prompts 可恢复原来的 y/i 提示。
+    interactive_safety_prompts: bool = False
 
     def resolved_rollout_root(self) -> pathlib.Path:
         if self.rollout_root:
@@ -316,6 +330,14 @@ class RolloutRecorder:
                 "camera_exposure_us": self.args.camera_exposure_us,
                 "camera_gain": self.args.camera_gain,
                 "reset_pose": "median_frame0_control_of_54_training_episodes",
+                "interactive_safety_prompts": self.args.interactive_safety_prompts,
+                "joint_jump_warning_deg": float(
+                    np.rad2deg(JOINT_JUMP_WARNING_RAD)
+                ),
+                "auto_smooth_joint_jump_max_deg": (
+                    AUTO_SMOOTH_JOINT_JUMP_MAX_DEG
+                ),
+                "right_insertion_z_floor_mm": RIGHT_INSERTION_Z_FLOOR_MM,
             },
             "start_time_ns": self.start_wall_ns,
             "start_time": datetime.datetime.fromtimestamp(self.start_wall_ns / 1e9).isoformat(timespec="milliseconds"),
@@ -492,12 +514,53 @@ def move_smoothly(env, start, target, step=0.001, max_steps=150):
         env.step(jnt, np.array([1, 1]))
 
 
-def check_action_safety(env, action, check_workspace=True):
+def classify_joint_increment(arm_delta):
+    """Classify a model step without changing the action itself."""
+    max_increment_deg = float(
+        np.rad2deg(np.max(np.abs(np.asarray(arm_delta, dtype=np.float64))))
+    )
+    if max_increment_deg <= float(np.rad2deg(JOINT_JUMP_WARNING_RAD)):
+        return "normal", max_increment_deg
+    if max_increment_deg <= AUTO_SMOOTH_JOINT_JUMP_MAX_DEG:
+        return "smooth", max_increment_deg
+    return "reject", max_increment_deg
+
+
+def classify_workspace_position(position):
+    """Distinguish the known right-arm insertion zone from a hard XYZ breach.
+
+    The bounds match the original safety check exactly. The only automatic
+    exception is the task's observed right-arm low-Z phase; X/Y and the left
+    arm retain their original limits.
+    """
+    pos = np.asarray(position, dtype=np.float64).reshape(-1)
+    if pos.size < 9:
+        raise ValueError(f"workspace position needs at least 9 values, got {pos.size}")
+
+    checks = (
+        ("left_x", -410 < pos[0] < 300),
+        ("left_y", -700 < pos[1] < -210),
+        ("left_z", pos[2] > WORKSPACE_Z_MIN_MM),
+        ("right_x", -250 < pos[6] < 410),
+        ("right_y", -700 < pos[7] < -210),
+        ("right_z", pos[8] > WORKSPACE_Z_MIN_MM),
+    )
+    reasons = [name for name, valid in checks if not valid]
+    if not reasons:
+        return "safe", reasons
+    if (reasons == ["right_z"]
+            and RIGHT_INSERTION_Z_FLOOR_MM < pos[8] <= WORKSPACE_Z_MIN_MM):
+        return "right_insertion_zone", reasons
+    return "hard_limit", reasons
+
+
+def evaluate_action_safety(env, action, check_workspace=True):
     """与原厂 run_inference.py 完全一致的安全边界，阈值未改动。
 
-    返回触发的保护类型；workspace 可由操作者显式覆盖，joint 不允许覆盖。
+    附带 workspace 分类，使主循环只自动通过已验证的右臂插接低位。
     """
     violations = []
+    workspace_detail = None
 
     # 左臂 -150<J3<0, J4>-35（度）；右臂 150>J3>0, J4<35
     if not ((-2.6 < action[2] < 0 and action[3] > -0.6)
@@ -508,13 +571,24 @@ def check_action_safety(env, action, check_workspace=True):
 
     # 夹爪指尖 XYZ 工作空间限制（mm）
     if check_workspace:
-        pos = env.get_XYZrxryrz_state()
-        if not ((-410 < pos[0] < 300 and -700 < pos[1] < -210 and pos[2] > 42)
-                and (-250 < pos[6] < 410 and -700 < pos[7] < -210 and pos[8] > 42)):
+        pos = np.asarray(env.get_XYZrxryrz_state(), dtype=np.float64)
+        classification, reasons = classify_workspace_position(pos)
+        workspace_detail = {
+            "classification": classification,
+            "reasons": reasons,
+            "position": pos.tolist(),
+        }
+        if classification != "safe":
             print("[Warn]:The robot arm XYZ is out of the safe position!")
             print(pos)
             violations.append("workspace")
 
+    return violations, workspace_detail
+
+
+def check_action_safety(env, action, check_workspace=True):
+    """Backward-compatible wrapper returning only the violation names."""
+    violations, _ = evaluate_action_safety(env, action, check_workspace)
     return violations
 
 
@@ -880,7 +954,13 @@ def main(args):
         "policy control: "
         + ("asynchronous closed-loop" if args.async_inference else "synchronous fallback")
     )
-    print("i: ignore XYZ workspace limit only when the override prompt is shown")
+    if args.interactive_safety_prompts:
+        print("safety handling: interactive prompts (y joint smoothing / i XYZ override)")
+    else:
+        print(
+            "safety handling: automatic smoothing in the validated range; "
+            "unexpected limits stop the current rollout"
+        )
     print("q during a rollout records ABORTED and does not enter the success rate.")
     print("Press r when the scene and robot are ready.\n")
 
@@ -1113,37 +1193,72 @@ def main(args):
                     (action[0:6] - last_action[0:6], action[7:13] - last_action[7:13])
                 )
                 requires_smooth_move = False
-                if np.max(np.abs(arm_delta)) > 0.17:
+                joint_step_class, max_increment_deg = classify_joint_increment(
+                    arm_delta
+                )
+                if joint_step_class != "normal":
                     print(
                         "Note! Joint increment larger than 10 degrees:",
                         np.round(arm_delta, 4),
                     )
-                    decision = wait_for_safety_key(
-                        keys,
-                        "JOINT JUMP >10deg | y CONTINUE | f FAIL",
-                        accepted_keys={"y", "f"},
-                    )
+                    if args.interactive_safety_prompts:
+                        decision = wait_for_safety_key(
+                            keys,
+                            "JOINT JUMP >10deg | y CONTINUE | f FAIL",
+                            accepted_keys={"y", "f"},
+                        )
+                    else:
+                        decision = (
+                            "y" if joint_step_class == "smooth" else "f"
+                        )
                     if decision == "y":
                         requires_smooth_move = True
                         recorder.add_event(
                             "joint_increment_override",
                             step=total_steps,
-                            max_increment_deg=float(
-                                np.rad2deg(np.max(np.abs(arm_delta)))
+                            max_increment_deg=max_increment_deg,
+                            decision_source=(
+                                "interactive" if args.interactive_safety_prompts
+                                else "automatic"
                             ),
                         )
-                        print(
-                            "[OVERRIDE] y accepted; executing a smooth joint move.",
-                            flush=True,
-                        )
+                        if args.interactive_safety_prompts:
+                            print(
+                                "[OVERRIDE] y accepted; executing the existing "
+                                "smooth joint move.",
+                                flush=True,
+                            )
+                        else:
+                            print(
+                                "[SMOOTH] Joint transition accepted in the validated "
+                                f"range ({max_increment_deg:.2f}deg); executing the "
+                                "existing smooth move.",
+                                flush=True,
+                            )
                     else:
+                        recorder.add_event(
+                            "joint_increment_rejected",
+                            step=total_steps,
+                            max_increment_deg=max_increment_deg,
+                            decision_source=(
+                                "interactive" if args.interactive_safety_prompts
+                                else "automatic"
+                            ),
+                        )
+                        if not args.interactive_safety_prompts:
+                            print(
+                                "[SAFETY STOP] Joint transition exceeds the "
+                                f"validated {AUTO_SMOOTH_JOINT_JUMP_MAX_DEG:.0f}deg "
+                                "automatic-smoothing range.",
+                                flush=True,
+                            )
                         finish_rollout(
                             "failure", "joint_increment_rejected"
                         )
                         print_ready()
                         continue
 
-                violations = check_action_safety(
+                violations, workspace_detail = evaluate_action_safety(
                     env,
                     action,
                     check_workspace=not ignore_workspace_safety,
@@ -1157,24 +1272,65 @@ def main(args):
                     print_ready()
                     continue
                 if "workspace" in violations:
-                    decision = wait_for_safety_key(
-                        keys,
-                        "XYZ LIMIT | i IGNORE THIS ROLLOUT | f FAIL",
-                        accepted_keys={"i", "f"},
-                    )
+                    if args.interactive_safety_prompts:
+                        decision = wait_for_safety_key(
+                            keys,
+                            "XYZ LIMIT | i IGNORE THIS ROLLOUT | f FAIL",
+                            accepted_keys={"i", "f"},
+                        )
+                    else:
+                        decision = (
+                            "i"
+                            if workspace_detail["classification"]
+                            == "right_insertion_zone"
+                            else "f"
+                        )
                     if decision == "i":
+                        # This deliberately matches the old post-i behavior:
+                        # after the known insertion transition, later XYZ RPCs
+                        # are skipped for this rollout. The model action and
+                        # motion command path are therefore unchanged.
                         ignore_workspace_safety = True
                         recorder.add_event(
                             "workspace_safety_override",
                             step=total_steps,
                             action=np.asarray(action).tolist(),
+                            workspace=workspace_detail,
+                            decision_source=(
+                                "interactive" if args.interactive_safety_prompts
+                                else "automatic"
+                            ),
                         )
-                        print(
-                            "[OVERRIDE] XYZ workspace limit disabled for this rollout; "
-                            "joint limits remain active.",
-                            flush=True,
-                        )
+                        if args.interactive_safety_prompts:
+                            print(
+                                "[OVERRIDE] i accepted; XYZ workspace checks are "
+                                "disabled for this rollout. Joint limits remain active.",
+                                flush=True,
+                            )
+                        else:
+                            print(
+                                "[TASK ZONE] Expected right-arm insertion height "
+                                "accepted; continuing without a key press. "
+                                "Joint limits remain active.",
+                                flush=True,
+                            )
                     else:
+                        recorder.add_event(
+                            "workspace_safety_rejected",
+                            step=total_steps,
+                            action=np.asarray(action).tolist(),
+                            workspace=workspace_detail,
+                            decision_source=(
+                                "interactive" if args.interactive_safety_prompts
+                                else "automatic"
+                            ),
+                        )
+                        if not args.interactive_safety_prompts:
+                            print(
+                                "[SAFETY STOP] Unexpected XYZ boundary: "
+                                + ", ".join(workspace_detail["reasons"]),
+                                flush=True,
+                            )
                         finish_rollout(
                             "failure", "workspace_safety_boundary"
                         )

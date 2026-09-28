@@ -355,6 +355,28 @@ WANDB_MODE=offline \
 
 不必下载约 42GB 的完整 checkpoint；优先在平台启动 policy server，再通过 SSH 隧道连接真机电脑。
 
+如果现场决定沿用 V1 时的本地 RTX 3090 推理方式，则用 Bita 把 `29999` 中推理所需的
+`params`、`assets` 和 `_CHECKPOINT_METADATA` 下载到：
+
+```text
+/home/iml/RockyEVO/openpi/checkpoints/pi05_xtrainer_full_v2_107eps/
+  plug_v2_107eps_full_h100_20260927_unlimited/29999
+```
+
+无需下载只用于续训的 `train_state`；本地推理目录约 12.5GB，远端约 44.7GB 的完整
+checkpoint 继续保留。具体 Bita 命令见 `scripts/README.md` 第七节。
+
+然后同时指定 V2 checkpoint 和 V2 配置启动本地服务：
+
+```bash
+cd /home/iml/RockyEVO/dobot_xtrainer/dobot_xtrainer-master
+./scripts/serve_xtrainer_v2_local.sh
+```
+
+客户端必须增加 V2 的 `--checkpoint-label`，并使用独立的
+`--task-name=plug_and_unplug_task_v2_107eps`，避免 rollout 标签错误或把 V1 结果混入
+V2 成功率。完整本地下载、校验、干跑和正式客户端命令见 `scripts/README.md` 第七节。
+
 服务端的配置和 checkpoint 必须同时使用 V2：
 
 ```bash

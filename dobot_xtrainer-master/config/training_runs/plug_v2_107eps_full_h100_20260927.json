@@ -253,5 +253,25 @@
     "checkpoint_20000_verified": true,
     "checkpoint_25000_verified": true,
     "platform_task_stopped": true
+  },
+  "local_inference": {
+    "status": "prepared_verified",
+    "prepared_at": "2026-09-28T19:50:02+08:00",
+    "checkpoint_dir": "/home/iml/RockyEVO/openpi/checkpoints/pi05_xtrainer_full_v2_107eps/plug_v2_107eps_full_h100_20260927_unlimited/29999",
+    "downloaded_items": [
+      "params",
+      "assets",
+      "_CHECKPOINT_METADATA"
+    ],
+    "train_state_downloaded": false,
+    "inference_size_bytes": 12441579444,
+    "params_size_bytes": 12441559216,
+    "params_file_count": 32,
+    "orbax_params_metadata_readable": true,
+    "norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
+    "policy_config": "pi05_xtrainer_full_v2_107eps",
+    "server_script": "scripts/serve_xtrainer_v2_local.sh",
+    "server_port": 8001,
+    "rollout_task_name": "plug_and_unplug_task_v2_107eps"
   }
 }

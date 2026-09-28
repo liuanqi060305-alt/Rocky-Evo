@@ -270,16 +270,81 @@ python experiments/run_control.py
 
 ## 七、本地 OpenPI 真机推理
 
-本机 RTX 3090 使用下载到本地的全量 checkpoint `29999`。模型服务默认使用
-`8001`，避免与智算平台 SSH 隧道常用的 `8000` 冲突。
+当前 V2 使用 107 条数据训练完成的全量 checkpoint：
+
+```text
+pi05_xtrainer_full_v2_107eps/
+  plug_v2_107eps_full_h100_20260927_unlimited/29999
+```
+
+本机 RTX 3090 负责加载模型，模型服务继续使用 `8001`。V2 与 V1 模型结构相同，
+但必须同时切换 checkpoint 和 `POLICY_CONFIG`；只改 checkpoint 路径会加载错误的
+norm stats。
+
+**首次使用：从智算文件存储下载 V2 推理文件**
+
+远端完整 checkpoint 约 44.7GB，其中约 32GB 的 `train_state` 只用于续训。
+`serve_policy.py` 本地推理只读取 `params` 和 `assets`，因此下载这两部分及 checkpoint
+元数据即可，合计约 12.5GB：
+
+```bash
+V2_CHECKPOINT=/home/iml/RockyEVO/openpi/checkpoints/pi05_xtrainer_full_v2_107eps/plug_v2_107eps_full_h100_20260927_unlimited/29999
+REMOTE_BASE='tm904895221620000/a1173895530/openpi训练/checkpoints/pi05_xtrainer_full_v2_107eps/plug_v2_107eps_full_h100_20260927_unlimited/29999'
+mkdir -p "$V2_CHECKPOINT"
+
+bita download \
+  -e https://console.aicloud.szu.edu.cn \
+  -b home \
+  -c 1964608207239503873 \
+  -o "$REMOTE_BASE/params/" \
+  -l "$V2_CHECKPOINT"
+
+bita download \
+  -e https://console.aicloud.szu.edu.cn \
+  -b home \
+  -c 1964608207239503873 \
+  -o "$REMOTE_BASE/assets/" \
+  -l "$V2_CHECKPOINT"
+
+bita download \
+  -e https://console.aicloud.szu.edu.cn \
+  -b home \
+  -c 1964608207239503873 \
+  -o "$REMOTE_BASE/_CHECKPOINT_METADATA" \
+  -l "$V2_CHECKPOINT"
+```
+
+下载完成后检查推理目录完整性：
+
+```bash
+test -f "$V2_CHECKPOINT/_CHECKPOINT_METADATA"
+test -d "$V2_CHECKPOINT/params"
+test -f "$V2_CHECKPOINT/assets/xtrainer/plug_and_unplug_task_v2_107eps/norm_stats.json"
+du -sh "$V2_CHECKPOINT"
+sha256sum "$V2_CHECKPOINT/assets/xtrainer/plug_and_unplug_task_v2_107eps/norm_stats.json"
+```
+
+本机不保存 `train_state` 不影响推理；需要续训时仍使用智算文件存储中的完整 checkpoint。
+最后一条应输出 norm stats 的已验证 SHA256：
+`5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db`。
 
 **终端 A：启动本地模型服务**
 ```bash
-cd /home/iml/RockyEVO/openpi
-./scripts/serve_xtrainer_local.sh
+cd /home/iml/RockyEVO/dobot_xtrainer/dobot_xtrainer-master
+./scripts/serve_xtrainer_v2_local.sh
 ```
+服务端必须打印上述 V2 config 和 V2 checkpoint 路径。若提示 `8001` 已存在不同
+OpenPI 进程，应由操作员先结束旧 V1 服务，再重新执行；脚本不会自动杀进程。
 首次推理会执行 JAX 编译，等待约 20～30 秒；之后单次推理约 200 ms。本机实测
-占用约 22.1 GB 显存，因此运行时不要同时训练其他模型。
+占用约 22.1 GB 显存，因此运行时不要同时训练其他模型或占用大量显存。
+
+另开终端只检查模型服务是否能连接，不会初始化相机或机械臂：
+
+```bash
+cd /home/iml/RockyEVO/dobot_xtrainer/dobot_xtrainer-master
+conda activate x_trainer
+python experiments/check_openpi_server.py --host 127.0.0.1 --port 8001
+```
 
 **终端 B：机械臂服务（已运行时不要重复启动）**
 ```bash
@@ -315,10 +380,20 @@ conda activate x_trainer
 python experiments/run_inference_openpi.py \
   --remote-host=127.0.0.1 \
   --remote-port=8001 \
+  --task-name=plug_and_unplug_task_v2_107eps \
+  --checkpoint-label=pi05_xtrainer_full_v2_107eps/plug_v2_107eps_full_h100_20260927_unlimited/29999 \
   --condition=original_position \
   --operator=iml \
   --show-img
 ```
+
+首次连接 V2 时，先在同一命令末尾增加 `--dry-run --max-steps=100`。干跑会读取三路
+相机、机器人状态并请求 V2 动作，但不会向机械臂下发动作。确认服务端路径、相机画面、
+动作 shape 和数值均正常后，再去掉这两个参数进行正式真机测试。测试新位置时，把
+`--condition=original_position` 改成对应且固定的人类可读条件名，方便分组统计成功率。
+V2 rollout 和汇总表单独保存在
+`/home/iml/RockyEVO/data/rollouts/plug_and_unplug_task_v2_107eps/`，不会把 V1 结果混入
+当前成功率。
 
 按键与灯光：
 

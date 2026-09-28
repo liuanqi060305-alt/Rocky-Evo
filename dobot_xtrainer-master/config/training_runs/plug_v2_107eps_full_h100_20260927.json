@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "run_id": "plug_v2_107eps_full_h100_20260927_unlimited",
-  "status": "training_running",
+  "status": "completed_verified",
   "platform": {
     "provider": "深圳大学智算中心",
     "task_name": "rocky-vla-v2-107eps-h100-unlimited",
@@ -10,7 +10,10 @@
     "gpu": "NVIDIA H100 80GB HBM3",
     "image": "loongforge_pi0.5:loongforge-pi05",
     "started_at": "2026-09-28T01:34:44+08:00",
-    "requested_duration": "unlimited"
+    "requested_duration": "unlimited",
+    "ended_at": "2026-09-28T14:27:52+08:00",
+    "final_status": "stopped",
+    "stopped_after_final_verification": true
   },
   "dataset": {
     "repo_id": "xtrainer/plug_and_unplug_task_v2_107eps",
@@ -62,10 +65,10 @@
     "launched_at": "2026-09-28T01:37:23+08:00",
     "first_step_at": "2026-09-28T01:41:48+08:00",
     "latest_observation": {
-      "observed_at": "2026-09-28T12:14:40+08:00",
-      "step": 25000,
-      "latest_logged_loss_step": 25000,
-      "latest_logged_loss": 0.0018,
+      "observed_at": "2026-09-28T14:18:32+08:00",
+      "step": 29900,
+      "latest_logged_loss_step": 29900,
+      "latest_logged_loss": 0.0015,
       "step_0_loss": 0.082,
       "rate_seconds_per_step": 1.5,
       "gpu_utilization_percent": 100,
@@ -135,6 +138,49 @@
       "retained": true,
       "retention_reason": "step is divisible by keep_period=5000",
       "verified": true
+    },
+    "completed_at": "2026-09-28T14:21:51+08:00",
+    "process_exit": "natural_after_final_checkpoint",
+    "logged_metric_count": 300,
+    "loss_summary": {
+      "metric_sequence": "0..29900 every 100 steps",
+      "metric_rows": 300,
+      "all_metrics_finite": true,
+      "step_0_loss": 0.082,
+      "step_29900_loss": 0.0015,
+      "minimum_logged_loss": 0.0013,
+      "minimum_logged_loss_step": 29500,
+      "first_10_mean_loss": 0.02972,
+      "last_10_mean_loss": 0.00148,
+      "start_to_last_reduction_percent": 98.17
+    },
+    "final_checkpoint": {
+      "step": 29999,
+      "finalized_at": "2026-09-28T14:21:51+08:00",
+      "verified_at": "2026-09-28T14:26:18+08:00",
+      "size_bytes": 44679460817,
+      "checkpoint_manager_all_steps": [
+        5000,
+        10000,
+        15000,
+        20000,
+        25000,
+        29999
+      ],
+      "checkpoint_manager_latest_step": 29999,
+      "temporary_directories_remaining": 0,
+      "required_checkpoint_files_present": true,
+      "params_metadata_readable": true,
+      "train_state_metadata_readable": true,
+      "manifests_present": true,
+      "asset_norm_stats_sha256": "5bcf29919fb9cf2eef523a8c609f335b67dc8dff4a4c52d09ef23126162248db",
+      "fatal_log_markers": {
+        "traceback": false,
+        "out_of_memory": false,
+        "uncaught_exception": false
+      },
+      "watchdog_success": true,
+      "verified": true
     }
   },
   "conversion": {
@@ -174,7 +220,10 @@
       "normalization hash matches",
       "Orbax metadata readable",
       "no fatal log markers"
-    ]
+    ],
+    "final_verification_completed_at": "2026-09-28T14:26:18+08:00",
+    "final_verification_success": true,
+    "watchdog_exited_after_report": true
   },
   "previous_attempt": {
     "task_name": "rocky-vla-v2-107eps-h100",
@@ -197,11 +246,12 @@
     "periodic_checkpoint_verified": true,
     "first_retained_checkpoint_verified": true,
     "retention_policy_verified": true,
-    "training_complete": false,
-    "final_checkpoint_verified": false,
+    "training_complete": true,
+    "final_checkpoint_verified": true,
     "checkpoint_10000_verified": true,
     "checkpoint_15000_verified": true,
     "checkpoint_20000_verified": true,
-    "checkpoint_25000_verified": true
+    "checkpoint_25000_verified": true,
+    "platform_task_stopped": true
   }
 }

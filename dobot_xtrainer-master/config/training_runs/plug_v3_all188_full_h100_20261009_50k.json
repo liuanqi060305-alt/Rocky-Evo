@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "run_id": "plug_v3_all188_full_h100_20261009_50k",
-  "status": "converting_dataset",
+  "status": "training_running",
   "platform": {
     "provider": "深圳大学智算中心",
     "task_name": "rocky-vla-v3-all188-h100-unlimited",
@@ -77,36 +77,73 @@
     "save_interval": 1000,
     "keep_period": 5000,
     "expected_final_checkpoint": 49999,
-    "started": false
+    "started": true,
+    "started_at": "2026-10-09T20:38:39+08:00",
+    "pid": 2870,
+    "latest_observation_at": "2026-10-09T20:46:42+08:00",
+    "latest_metrics": {
+      "step": 100,
+      "grad_norm": 0.3791,
+      "loss": 0.0552,
+      "param_norm": 1802.3861
+    },
+    "step_0_metrics": {
+      "grad_norm": 1.4922,
+      "loss": 0.0938,
+      "param_norm": 1802.3865
+    },
+    "observed_seconds_per_step": 1.5,
+    "estimated_duration_hours": 20.5,
+    "estimated_completion": "2026-10-10T17:15:00+08:00"
   },
   "conversion": {
-    "completed": false,
+    "completed": true,
     "started": true,
     "started_at": "2026-10-09T19:27:00+08:00",
     "target": "/root/rocky-vla-work/hf_lerobot/xtrainer/plug_and_unplug_task_v3_all188",
     "attempts": 2,
-    "first_attempt_note": "stopped after 5 episodes because DPC shared storage was I/O-bound; partial output removed"
+    "first_attempt_note": "stopped after 5 episodes because DPC shared storage was I/O-bound; partial output removed",
+    "completed_at": "2026-10-09T19:54:49+08:00",
+    "verified_episode_count": 188,
+    "verified_frame_count": 63495,
+    "verified_fps": 15,
+    "verified_task": "plug and unplug",
+    "size_bytes": 54426287947
   },
   "normalization": {
-    "completed": false
+    "completed": true,
+    "completed_at": "2026-10-09T20:38:25+08:00",
+    "path": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi/assets/pi05_xtrainer_full_v3_all188/xtrainer/plug_and_unplug_task_v3_all188/norm_stats.json",
+    "sha256": "e5021ed3fe3a17f29783126e06eed0afda90975ac078bc3009399ff83b5a8fcc",
+    "dimensions": {
+      "state": 14,
+      "actions": 14
+    },
+    "finite_values_verified": true,
+    "positive_std_verified": true
   },
   "monitoring": {
-    "watchdog_started": false,
-    "poll_seconds": 300
+    "watchdog_started": true,
+    "poll_seconds": 300,
+    "watchdog_started_at": "2026-10-09T20:46:38+08:00",
+    "watchdog_pid": 5541,
+    "watch_status": "/share/home/tm904895221620000/a1173895530/openpi训练/run/plug_v3_all188_full_h100_20261009_50k.watch_status.json",
+    "final_report": "/share/home/tm904895221620000/a1173895530/openpi训练/run/plug_v3_all188_full_h100_20261009_50k.final_verification.json",
+    "expected_success_marker": "/share/home/tm904895221620000/a1173895530/openpi训练/run/plug_v3_all188_full_h100_20261009_50k.final_verification.success"
   },
   "milestones": {
     "raw_archive_uploaded": true,
     "raw_archive_verified": true,
     "raw_snapshot_verified": true,
-    "lerobot_conversion_complete": false,
-    "norm_stats_complete": false,
-    "training_started": false,
+    "lerobot_conversion_complete": true,
+    "norm_stats_complete": true,
+    "training_started": true,
     "first_checkpoint_verified": false,
     "training_complete": false,
     "final_checkpoint_verified": false,
     "platform_task_stopped": false
   },
-  "updated_at": "2026-10-09T19:29:09+08:00",
+  "updated_at": "2026-10-09T20:47:15+08:00",
   "preparation": {
     "runner": "/share/home/tm904895221620000/a1173895530/openpi训练/patches/run_v3_all188_szu.sh",
     "prepare_log": "/share/home/tm904895221620000/a1173895530/openpi训练/logs/plug_v3_all188_full_h100_20261009_50k.prepare.log",

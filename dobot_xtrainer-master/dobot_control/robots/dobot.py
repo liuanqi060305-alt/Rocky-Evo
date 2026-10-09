@@ -140,6 +140,13 @@ class DobotRobot(Robot):
         pos = list(map(float, self.r_inter.GetPose().split("{")[1].split("}")[0].split(",")))  # 单位：度数
         return pos
 
+    def get_controller_status(self):
+        """Read dashboard state even when the feedback alarm is latched."""
+        return {
+            "mode_response": self.r_inter.RobotMode().strip(),
+            "error_response": self.r_inter.GetErrorID().strip(),
+        }
+
     def command_joint_state(self, joint_state: np.ndarray) -> None:
         """Command the leader robot to a given state.
 

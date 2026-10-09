@@ -16,6 +16,7 @@ from experiments.run_inference_openpi import (
     RolloutRecorder,
     controllers_ready_for_recovery,
     finalize_recorded_rollout,
+    read_controller_statuses,
     finish_robot_fault,
     is_controller_alarm,
 )
@@ -75,6 +76,21 @@ class ControllerAlarmClassificationTests(unittest.TestCase):
         ))
         self.assertFalse(controllers_ready_for_recovery(
             [status("left"), status("right", reply="0,{},GetErrorID();")]
+        ))
+
+    def test_recovery_status_uses_existing_robot_server_connection(self):
+        class FakeClient:
+            def get_controller_statuses(self):
+                return {
+                    name: {
+                        "mode_response": "0,{5},RobotMode();",
+                        "error_response": "0,{[[],[],[],[],[],[],[]]},GetErrorID();",
+                    }
+                    for name in ("left", "right")
+                }
+
+        self.assertTrue(controllers_ready_for_recovery(
+            read_controller_statuses(FakeClient())
         ))
 
 

@@ -1,8 +1,10 @@
 import unittest
 from threading import Event, Lock
+from unittest import mock
 
 from dobot_control.robots.dobot import DobotRobot
 from dobot_control.robots.dobot_api import DobotApiStatus
+from dobot_control.robots.robot import BimanualRobot
 
 from scripts.check_dobot_alarm import (
     ControllerStatus,
@@ -37,6 +39,38 @@ class DobotAlarmParsingTests(unittest.TestCase):
 
 
 class DobotFeedbackFailureTests(unittest.TestCase):
+    def test_bimanual_status_reads_both_latched_arms(self):
+        left = mock.Mock(robot_is_err=True)
+        right = mock.Mock(robot_is_err=True)
+        left.get_controller_status.return_value = {"mode_response": "left"}
+        right.get_controller_status.return_value = {"mode_response": "right"}
+        robot = BimanualRobot.__new__(BimanualRobot)
+        robot._robot_l = left
+        robot._robot_r = right
+
+        self.assertEqual(robot.get_controller_statuses(), {
+            "left": {"mode_response": "left"},
+            "right": {"mode_response": "right"},
+        })
+        left.get_controller_status.assert_called_once_with()
+        right.get_controller_status.assert_called_once_with()
+
+    def test_controller_status_remains_readable_when_motion_is_latched(self):
+        class FakeDashboard:
+            def RobotMode(self):
+                return "0,{9},RobotMode();"
+
+            def GetErrorID(self):
+                return "0,{[116]},GetErrorID();"
+
+        robot = DobotRobot.__new__(DobotRobot)
+        robot.robot_is_err = True
+        robot.r_inter = FakeDashboard()
+        self.assertEqual(robot.get_controller_status(), {
+            "mode_response": "0,{9},RobotMode();",
+            "error_response": "0,{[116]},GetErrorID();",
+        })
+
     def test_closed_status_socket_raises_instead_of_spinning(self):
         class ClosedSocket:
             def recv(self, count):

@@ -9,6 +9,7 @@ from dobot_control.robots.robot import Robot
 from scripts.function_util import log_write
 
 DEFAULT_ROBOT_PORT = 6000
+CONTROLLER_STATUS_TIMEOUT_MS = 15000
 
 _REMOTE_ERROR_KEY = "__robot_server_error__"
 
@@ -84,6 +85,8 @@ class ZMQServerRobot:
                     result = self._robot.set_do_status(**args)
                 elif method == "get_XYZrxryrz_state":
                     result = self._robot.get_XYZrxryrz_state()
+                elif method == "get_controller_statuses":
+                    result = self._robot.get_controller_statuses()
                 else:
                     raise NotImplementedError(
                         f"Invalid method: {method}, args={args}"
@@ -147,22 +150,28 @@ class ZMQClientRobot(Robot):
         if not self._closed:
             self._socket = self._open_socket()
 
-    def _request(self, method: str, args=None):
+    def _request(self, method: str, args=None, recv_timeout_ms=None):
         request = {"method": method}
         if args is not None:
             request["args"] = args
         with self._lock:
             if self._closed:
                 raise RuntimeError("robot client is closed")
+            socket = self._socket
+            effective_timeout_ms = (
+                self._timeout_ms if recv_timeout_ms is None else recv_timeout_ms
+            )
             try:
-                self._socket.send(pickle.dumps(request))
-                result = pickle.loads(self._socket.recv())
+                if recv_timeout_ms is not None:
+                    socket.setsockopt(zmq.RCVTIMEO, effective_timeout_ms)
+                socket.send(pickle.dumps(request))
+                result = pickle.loads(socket.recv())
             except zmq.Again as exc:
                 self._replace_socket()
                 raise TimeoutError(
                     f"robot server method {method!r} at {self._endpoint} "
                     "did not reply within "
-                    f"{self._timeout_ms / 1000:g}s; inspect launch_nodes.py "
+                    f"{effective_timeout_ms / 1000:g}s; inspect launch_nodes.py "
                     "and the Dobot controller alarm"
                 ) from exc
             except zmq.ZMQError as exc:
@@ -174,6 +183,11 @@ class ZMQClientRobot(Robot):
                         "the socket has been reconnected"
                     ) from exc
                 raise
+            finally:
+                # Motion and all other RPCs retain the original short deadline.
+                # A timed-out socket was replaced and must not be reused.
+                if recv_timeout_ms is not None and self._socket is socket:
+                    socket.setsockopt(zmq.RCVTIMEO, self._timeout_ms)
 
             if isinstance(result, dict) and _REMOTE_ERROR_KEY in result:
                 error = result[_REMOTE_ERROR_KEY]
@@ -234,3 +248,9 @@ class ZMQClientRobot(Robot):
 
     def get_XYZrxryrz_state(self):
         return self._request("get_XYZrxryrz_state")
+
+    def get_controller_statuses(self):
+        return self._request(
+            "get_controller_statuses",
+            recv_timeout_ms=max(self._timeout_ms, CONTROLLER_STATUS_TIMEOUT_MS),
+        )

@@ -174,6 +174,14 @@ class BimanualRobot(Robot):
             (self._robot_l.get_XYZrxryrz_state(), self._robot_r.get_XYZrxryrz_state())
         )
 
+    def get_controller_statuses(self):
+        # Do not assert robot_is_err: this read-only query is needed exactly
+        # when the ordinary motion/observation methods are alarm-locked.
+        return {
+            "left": self._robot_l.get_controller_status(),
+            "right": self._robot_r.get_controller_status(),
+        }
+
 def main():
     pass
 

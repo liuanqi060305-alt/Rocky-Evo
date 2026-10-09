@@ -50,7 +50,10 @@ from dobot_control.agents import async_policy
 from dobot_control.cameras.realsense_camera import RealSenseCamera
 from dobot_control.env import RobotEnv
 from dobot_control.robots.robot_node import RobotServerError, ZMQClientRobot
-from scripts.check_dobot_alarm import format_status, query_all_controllers
+from scripts.check_dobot_alarm import (
+    CONTROLLERS, ControllerStatus, format_status, parse_error_ids,
+    parse_robot_mode,
+)
 from scripts.manipulate_utils import load_ini_data_camera
 
 
@@ -664,6 +667,29 @@ def controllers_ready_for_recovery(statuses):
     )
 
 
+def read_controller_statuses(robot_client):
+    """Query through launch_nodes' existing dashboard sockets (29999 is single-client)."""
+    raw = robot_client.get_controller_statuses()
+    if not isinstance(raw, dict) or set(raw) != {"left", "right"}:
+        raise ValueError("robot server returned incomplete controller statuses")
+    statuses = []
+    for name in ("left", "right"):
+        item = raw[name]
+        if not isinstance(item, dict):
+            raise ValueError(f"{name} controller status is malformed")
+        mode_reply = item.get("mode_response")
+        error_reply = item.get("error_response")
+        if not isinstance(mode_reply, str) or not isinstance(error_reply, str):
+            raise ValueError(f"{name} controller replies are malformed")
+        statuses.append(ControllerStatus(
+            name=name, ip=CONTROLLERS[name],
+            mode=parse_robot_mode(mode_reply),
+            error_ids=parse_error_ids(error_reply),
+            mode_response=mode_reply, error_response=error_reply,
+        ))
+    return statuses
+
+
 def finalize_recorded_rollout(recorder, env, result, reason="", idle_light=True,
                               step=None, robot_fault=None):
     """Finalize once, converting any robot I/O uncertainty into a failure."""
@@ -989,7 +1015,7 @@ def main(args):
         """Read both controller alarms and robot state; never clear/enable/move."""
         nonlocal faulted, emergency
         try:
-            statuses = query_all_controllers()
+            statuses = read_controller_statuses(robot_client)
             for status in statuses:
                 print("[RECOVERY] " + format_status(status), flush=True)
             if not controllers_ready_for_recovery(statuses):

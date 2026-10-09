@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "run_id": "plug_v3_all188_full_h100_20261009_50k",
-  "status": "platform_task_queuing_and_raw_uploading",
+  "status": "converting_dataset",
   "platform": {
     "provider": "深圳大学智算中心",
     "task_name": "rocky-vla-v3-all188-h100-unlimited",
@@ -12,7 +12,8 @@
     "image": "harbor.aicloud.szu.edu.cn:5000/loongforge/loongforge_pi0.5:loongforge-pi05",
     "created_at": "2026-10-09T18:56:10+08:00",
     "requested_duration": "unlimited",
-    "state": "Queuing"
+    "state": "Running",
+    "started_at": "2026-10-09T19:02:45+08:00"
   },
   "dataset": {
     "repo_id": "xtrainer/plug_and_unplug_task_v3_all188",
@@ -36,18 +37,21 @@
     "size_bytes": 12545500425,
     "sha256": "5f231d04933b2523b062cb80278c6928fcd9ca062f392462e0de6ddcb1afee68",
     "platform_path": "/share/home/tm904895221620000/a1173895530/datasets/raw_snapshots/plug_v3_all188_20261009_raw.tar.zst",
-    "upload_completed": false,
-    "platform_sha256_verified": false
+    "upload_completed": true,
+    "platform_sha256_verified": true
   },
   "runtime_paths": {
     "openpi_root": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi",
-    "raw_snapshot": "/share/home/tm904895221620000/a1173895530/datasets/raw_snapshots/plug_v3_all188_20261009/plug_and_unplug_task",
-    "lerobot_home": "/share/home/tm904895221620000/a1173895530/openpi训练/hf_lerobot",
+    "raw_snapshot": "/root/rocky-vla-work/raw_snapshots/plug_v3_all188_20261009/plug_and_unplug_task",
+    "lerobot_home": "/root/rocky-vla-work/hf_lerobot",
     "checkpoint_base": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints",
     "log_root": "/share/home/tm904895221620000/a1173895530/openpi训练/logs",
     "norm_stats": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi/assets/pi05_xtrainer_full_v3_all188/xtrainer/plug_and_unplug_task_v3_all188/norm_stats.json",
     "training_log": "/share/home/tm904895221620000/a1173895530/openpi训练/logs/plug_v3_all188_full_h100_20261009_50k.log",
-    "checkpoint_dir": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints/pi05_xtrainer_full_v3_all188/plug_v3_all188_full_h100_20261009_50k"
+    "checkpoint_dir": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints/pi05_xtrainer_full_v3_all188/plug_v3_all188_full_h100_20261009_50k",
+    "raw_snapshot_scope": "instance-local, rebuildable from the verified persistent archive",
+    "lerobot_scope": "instance-local, rebuildable from the verified persistent archive",
+    "hf_datasets_cache": "/root/rocky-vla-work/hf_datasets_cache"
   },
   "training": {
     "config": "pi05_xtrainer_full_v3_all188",
@@ -76,7 +80,12 @@
     "started": false
   },
   "conversion": {
-    "completed": false
+    "completed": false,
+    "started": true,
+    "started_at": "2026-10-09T19:27:00+08:00",
+    "target": "/root/rocky-vla-work/hf_lerobot/xtrainer/plug_and_unplug_task_v3_all188",
+    "attempts": 2,
+    "first_attempt_note": "stopped after 5 episodes because DPC shared storage was I/O-bound; partial output removed"
   },
   "normalization": {
     "completed": false
@@ -86,9 +95,9 @@
     "poll_seconds": 300
   },
   "milestones": {
-    "raw_archive_uploaded": false,
-    "raw_archive_verified": false,
-    "raw_snapshot_verified": false,
+    "raw_archive_uploaded": true,
+    "raw_archive_verified": true,
+    "raw_snapshot_verified": true,
     "lerobot_conversion_complete": false,
     "norm_stats_complete": false,
     "training_started": false,
@@ -96,5 +105,15 @@
     "training_complete": false,
     "final_checkpoint_verified": false,
     "platform_task_stopped": false
+  },
+  "updated_at": "2026-10-09T19:29:09+08:00",
+  "preparation": {
+    "runner": "/share/home/tm904895221620000/a1173895530/openpi训练/patches/run_v3_all188_szu.sh",
+    "prepare_log": "/share/home/tm904895221620000/a1173895530/openpi训练/logs/plug_v3_all188_full_h100_20261009_50k.prepare.log",
+    "archive_hash_verified_before_extraction": true,
+    "raw_snapshot_verified": true,
+    "zstd_version": "1.5.7",
+    "local_snapshot_reason": "avoid DPC shared-filesystem small-file extraction bottleneck",
+    "local_lerobot_reason": "avoid DPC random-read/write bottleneck during conversion and training"
   }
 }

@@ -6,7 +6,8 @@ BASE="${BASE:-${ACCOUNT_ROOT}/openpi训练}"
 OPENPI_ROOT="${OPENPI_ROOT:-${BASE}/openpi}"
 ARCHIVE="${ACCOUNT_ROOT}/datasets/raw_snapshots/plug_v3_all188_20261009_raw.tar.zst"
 ARCHIVE_SHA256="5f231d04933b2523b062cb80278c6928fcd9ca062f392462e0de6ddcb1afee68"
-SNAP_ROOT="${ACCOUNT_ROOT}/datasets/raw_snapshots/plug_v3_all188_20261009"
+WORK_ROOT="${WORK_ROOT:-/root/rocky-vla-work}"
+SNAP_ROOT="${WORK_ROOT}/raw_snapshots/plug_v3_all188_20261009"
 RAW="${SNAP_ROOT}/plug_and_unplug_task"
 PATCH="${BASE}/patches/pi05_xtrainer_full_v3_all188.patch"
 TRAIN_CONFIG="pi05_xtrainer_full_v3_all188"
@@ -14,12 +15,12 @@ REPO_ID="xtrainer/plug_and_unplug_task_v3_all188"
 EXP_NAME="plug_v3_all188_full_h100_20261009_50k"
 LOG_ROOT="${BASE}/logs"
 RUN_ROOT="${BASE}/run"
-HF_LEROBOT_HOME="${BASE}/hf_lerobot"
+HF_LEROBOT_HOME="${HF_LEROBOT_HOME:-${WORK_ROOT}/hf_lerobot}"
 CONVERTED="${HF_LEROBOT_HOME}/${REPO_ID}"
 CHECKPOINT_DIR="${BASE}/checkpoints/${TRAIN_CONFIG}/${EXP_NAME}"
 LOCK_FILE="${RUN_ROOT}/${EXP_NAME}.prepare.lock"
 
-mkdir -p "$LOG_ROOT" "$RUN_ROOT" "$HF_LEROBOT_HOME"
+mkdir -p "$LOG_ROOT" "$RUN_ROOT" "$HF_LEROBOT_HOME" "$WORK_ROOT/raw_snapshots" "$WORK_ROOT/hf_datasets_cache" "$WORK_ROOT/tmp"
 exec 9>"$LOCK_FILE"
 if ! flock -n 9; then
     echo "Another V3 preparation process holds $LOCK_FILE" >&2
@@ -35,6 +36,8 @@ test -d "$OPENPI_ROOT"
 test -x "$OPENPI_ROOT/.venv/bin/python"
 test -f "$ARCHIVE"
 test -f "$PATCH"
+command -v zstd >/dev/null
+zstd --version
 
 actual_sha256="$(sha256sum "$ARCHIVE" | awk '{print $1}')"
 if [[ "$actual_sha256" != "$ARCHIVE_SHA256" ]]; then
@@ -88,7 +91,8 @@ print("OpenPI V3 config verified")
 PY
 
 export HF_LEROBOT_HOME
-export HF_DATASETS_CACHE="${BASE}/hf_datasets_cache"
+export HF_DATASETS_CACHE="${WORK_ROOT}/hf_datasets_cache"
+export TMPDIR="${WORK_ROOT}/tmp"
 export HF_HUB_OFFLINE=1
 export HF_DATASETS_OFFLINE=1
 export UV_OFFLINE=1

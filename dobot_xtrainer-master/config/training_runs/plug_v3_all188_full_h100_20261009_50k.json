@@ -1,0 +1,100 @@
+{
+  "schema_version": 1,
+  "run_id": "plug_v3_all188_full_h100_20261009_50k",
+  "status": "platform_task_queuing_and_raw_uploading",
+  "platform": {
+    "provider": "深圳大学智算中心",
+    "task_name": "rocky-vla-v3-all188-h100-unlimited",
+    "task_id": "a21453992099704832976866",
+    "task_url": "https://console.aicloud.szu.edu.cn/console/task-debug/detail/a21453992099704832976866",
+    "gpu": "NVIDIA H100 80GB HBM3",
+    "package": "GPU-单卡nvidia-H100-80GB-22C-240G",
+    "image": "harbor.aicloud.szu.edu.cn:5000/loongforge/loongforge_pi0.5:loongforge-pi05",
+    "created_at": "2026-10-09T18:56:10+08:00",
+    "requested_duration": "unlimited",
+    "state": "Queuing"
+  },
+  "dataset": {
+    "repo_id": "xtrainer/plug_and_unplug_task_v3_all188",
+    "episode_count": 188,
+    "frame_count": 63495,
+    "fps": 15,
+    "prompt": "plug and unplug",
+    "selection_manifest": "config/dataset_annotations/plug_and_unplug_task_v3_all188_20261009.json",
+    "selection_manifest_sha256": "375f3d6e92ca137ad90650d1fab7c32a50f813348b12415bdcd743fb3540dce4",
+    "audit": {
+      "pass": 126,
+      "fail": 62,
+      "included_despite_fail": 62,
+      "abnormal_length": 46,
+      "action_jump": 31,
+      "structurally_complete": 188
+    }
+  },
+  "raw_archive": {
+    "name": "plug_v3_all188_20261009_raw.tar.zst",
+    "size_bytes": 12545500425,
+    "sha256": "5f231d04933b2523b062cb80278c6928fcd9ca062f392462e0de6ddcb1afee68",
+    "platform_path": "/share/home/tm904895221620000/a1173895530/datasets/raw_snapshots/plug_v3_all188_20261009_raw.tar.zst",
+    "upload_completed": false,
+    "platform_sha256_verified": false
+  },
+  "runtime_paths": {
+    "openpi_root": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi",
+    "raw_snapshot": "/share/home/tm904895221620000/a1173895530/datasets/raw_snapshots/plug_v3_all188_20261009/plug_and_unplug_task",
+    "lerobot_home": "/share/home/tm904895221620000/a1173895530/openpi训练/hf_lerobot",
+    "checkpoint_base": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints",
+    "log_root": "/share/home/tm904895221620000/a1173895530/openpi训练/logs",
+    "norm_stats": "/share/home/tm904895221620000/a1173895530/openpi训练/openpi/assets/pi05_xtrainer_full_v3_all188/xtrainer/plug_and_unplug_task_v3_all188/norm_stats.json",
+    "training_log": "/share/home/tm904895221620000/a1173895530/openpi训练/logs/plug_v3_all188_full_h100_20261009_50k.log",
+    "checkpoint_dir": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints/pi05_xtrainer_full_v3_all188/plug_v3_all188_full_h100_20261009_50k"
+  },
+  "training": {
+    "config": "pi05_xtrainer_full_v3_all188",
+    "experiment": "plug_v3_all188_full_h100_20261009_50k",
+    "base_weights": "pi05_base",
+    "finetune_mode": "full",
+    "batch_size": 32,
+    "num_train_steps": 50000,
+    "effective_dataset_passes": 25.2,
+    "seed": 42,
+    "num_workers": 2,
+    "optimizer": "AdamW",
+    "learning_rate": {
+      "schedule": "cosine_decay",
+      "warmup_steps": 1000,
+      "peak": 2.5e-05,
+      "final": 2.5e-06,
+      "decay_steps": 50000
+    },
+    "gradient_clip_norm": 1.0,
+    "ema_decay": 0.99,
+    "log_interval": 100,
+    "save_interval": 1000,
+    "keep_period": 5000,
+    "expected_final_checkpoint": 49999,
+    "started": false
+  },
+  "conversion": {
+    "completed": false
+  },
+  "normalization": {
+    "completed": false
+  },
+  "monitoring": {
+    "watchdog_started": false,
+    "poll_seconds": 300
+  },
+  "milestones": {
+    "raw_archive_uploaded": false,
+    "raw_archive_verified": false,
+    "raw_snapshot_verified": false,
+    "lerobot_conversion_complete": false,
+    "norm_stats_complete": false,
+    "training_started": false,
+    "first_checkpoint_verified": false,
+    "training_complete": false,
+    "final_checkpoint_verified": false,
+    "platform_task_stopped": false
+  }
+}

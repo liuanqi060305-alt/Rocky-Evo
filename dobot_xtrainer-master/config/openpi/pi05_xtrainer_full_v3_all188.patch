@@ -1,0 +1,42 @@
+--- a/src/openpi/training/config.py
++++ b/src/openpi/training/config.py
+@@ -948,6 +948,39 @@
+         save_interval=1_000,
+         keep_period=5_000,
+     ),
++    # V3 uses every episode present in the frozen collect_data snapshot.
++    # 50k steps keep approximately the same per-frame exposure as the V2
++    # 107-episode/30k-step run (about 25 effective dataset passes).
++    TrainConfig(
++        name="pi05_xtrainer_full_v3_all188",
++        model=pi0_config.Pi0Config(pi05=True),
++        data=LeRobotXTrainerDataConfig(
++            repo_id="xtrainer/plug_and_unplug_task_v3_all188",
++            base_config=DataConfig(prompt_from_task=True),
++        ),
++        weight_loader=weight_loaders.CheckpointWeightLoader("gs://openpi-assets/checkpoints/pi05_base/params"),
++        lr_schedule=_optimizer.CosineDecaySchedule(
++            warmup_steps=1_000,
++            peak_lr=2.5e-5,
++            decay_steps=50_000,
++            decay_lr=2.5e-6,
++        ),
++        optimizer=_optimizer.AdamW(
++            b1=0.9,
++            b2=0.95,
++            eps=1e-8,
++            weight_decay=1e-10,
++            clip_gradient_norm=1.0,
++        ),
++        ema_decay=0.99,
++        seed=42,
++        batch_size=32,
++        num_workers=2,
++        num_train_steps=50_000,
++        log_interval=100,
++        save_interval=1_000,
++        keep_period=5_000,
++    ),
+     #
+     # Fine-tuning Aloha configs.
+     #

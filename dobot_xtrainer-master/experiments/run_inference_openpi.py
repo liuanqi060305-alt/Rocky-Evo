@@ -13,18 +13,21 @@ WebSocket 服务端。两边只传 numpy 数组，不共享 Python 依赖 ——
 
 程序不会自动开始运动。按 r 开始一条 rollout，按 s/f 标记成功/失败；运行中
 按 h 会中止本条并复位，待机时按 h 只复位。s/f/h 后程序继续运行，按 q 结束，
-按 e 急停并结束。数据和成功率默认写到 RockyEVO/data/rollouts/。
+按 e 停止继续下发动作并结束（需要立即断动力时使用实体急停按钮）。数据和
+成功率默认写到 RockyEVO/data/rollouts/。
 """
 import sys
 import os
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.append(BASE_DIR)
 import csv
+import ast
 import datetime
 import json
 import pathlib
 import pickle
 import queue
+import re
 import select
 import termios
 import time
@@ -39,17 +42,27 @@ os.environ.setdefault("QT_QPA_FONTDIR", "/usr/share/fonts/truetype/dejavu")
 import cv2
 import numpy as np
 import tyro
+import zmq
 from openpi_client import image_tools
 from openpi_client import websocket_client_policy
 
 from dobot_control.agents import async_policy
 from dobot_control.cameras.realsense_camera import RealSenseCamera
 from dobot_control.env import RobotEnv
-from dobot_control.robots.robot_node import ZMQClientRobot
+from dobot_control.robots.robot_node import RobotServerError, ZMQClientRobot
+from scripts.check_dobot_alarm import format_status, query_all_controllers
 from scripts.manipulate_utils import load_ini_data_camera
 
 
 CONTROL_PERIOD_S = 0.04
+ROBOT_IO_EXCEPTIONS = (RobotServerError, TimeoutError, ConnectionError, zmq.ZMQError)
+# 从 24 条成功和 3 条控制器报警的 v2 rollout 离线回放得到；仅是
+# 插接前的保守停机征兆，不是经过力传感器标定的接触力阈值。
+CONTACT_RIGHT_J3_POSE_DEG = (65.0, 75.0)
+CONTACT_RIGHT_J4_POSE_DEG = (-70.0, -60.0)
+CONTACT_PREVIOUS_TARGET_LAG_DEG = 1.1
+CONTACT_ACTUAL_REVERSAL_DEG = -0.4
+CONTACT_MIN_TARGET_DELTA_DEG = -0.4
 # 保留原先触发 y 提示的 0.17rad 阈值和 y 之后的平滑插值行为。自动模式只
 # 消除人工等待；不放大单步指令，也不改写模型动作。25deg 覆盖当前 20 条成功
 # rollout 中观察到的最大值 21.97deg，超出该范围仍会拒绝当前动作。
@@ -122,6 +135,9 @@ class Args:
     # 默认自动处理历史成功轨迹中固定出现的 y/i 分支，使控制循环不等待人工按键。
     # 调试或 A/B 对照时增加 --interactive-safety-prompts 可恢复原来的 y/i 提示。
     interactive_safety_prompts: bool = False
+    # 仅在已验证的右臂插接姿态监测“目标继续前进、实际关节突然反向且已落后目标”。
+    # 不改变任何正常动作；可用 --no-contact-guard 做对照。有限样本不能保证拦下所有碰撞。
+    contact_guard: bool = True
 
     def resolved_rollout_root(self) -> pathlib.Path:
         if self.rollout_root:
@@ -338,6 +354,14 @@ class RolloutRecorder:
                     AUTO_SMOOTH_JOINT_JUMP_MAX_DEG
                 ),
                 "right_insertion_z_floor_mm": RIGHT_INSERTION_Z_FLOOR_MM,
+                "contact_guard": self.args.contact_guard,
+                "contact_guard_rule": {
+                    "right_j3_pose_deg": CONTACT_RIGHT_J3_POSE_DEG,
+                    "right_j4_pose_deg": CONTACT_RIGHT_J4_POSE_DEG,
+                    "previous_target_lag_gt_deg": CONTACT_PREVIOUS_TARGET_LAG_DEG,
+                    "actual_j3_delta_lt_deg": CONTACT_ACTUAL_REVERSAL_DEG,
+                    "target_j3_delta_gt_deg": CONTACT_MIN_TARGET_DELTA_DEG,
+                },
             },
             "start_time_ns": self.start_wall_ns,
             "start_time": datetime.datetime.fromtimestamp(self.start_wall_ns / 1e9).isoformat(timespec="milliseconds"),
@@ -526,6 +550,138 @@ def classify_joint_increment(arm_delta):
     return "reject", max_increment_deg
 
 
+class JointTrackingGuard:
+    """Stop before the next command on the observed right-J3 contact signature.
+
+    This is a detection-only interlock, calibrated against the available v2
+    rollouts. It never clips or changes a policy action. It cannot prove that
+    contact has not already caused a controller alarm.
+    """
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.previous_command = None
+        self.previous_observed = None
+
+    def observe(self, command, observed):
+        command = np.asarray(command, dtype=np.float64).reshape(-1)
+        observed = np.asarray(observed, dtype=np.float64).reshape(-1)
+        if command.size != 14 or observed.size != 14:
+            raise ValueError("contact guard needs 14-D command and observation")
+        if not np.isfinite(command).all() or not np.isfinite(observed).all():
+            raise ValueError("non-finite robot joint state or policy command")
+
+        previous_command = self.previous_command
+        previous_observed = self.previous_observed
+        self.previous_command = command.copy()
+        self.previous_observed = observed.copy()
+        if previous_command is None:
+            return False, {}
+
+        right_j3_deg = float(np.rad2deg(observed[9]))
+        right_j4_deg = float(np.rad2deg(observed[10]))
+        lag_deg = float(np.rad2deg(previous_command[9] - observed[9]))
+        actual_delta_deg = float(np.rad2deg(observed[9] - previous_observed[9]))
+        target_delta_deg = float(np.rad2deg(command[9] - previous_command[9]))
+        triggered = (
+            CONTACT_RIGHT_J3_POSE_DEG[0] <= right_j3_deg <= CONTACT_RIGHT_J3_POSE_DEG[1]
+            and CONTACT_RIGHT_J4_POSE_DEG[0] <= right_j4_deg <= CONTACT_RIGHT_J4_POSE_DEG[1]
+            and lag_deg > CONTACT_PREVIOUS_TARGET_LAG_DEG
+            and actual_delta_deg < CONTACT_ACTUAL_REVERSAL_DEG
+            and target_delta_deg > CONTACT_MIN_TARGET_DELTA_DEG
+        )
+        return triggered, {
+            "right_j3_deg": right_j3_deg,
+            "right_j4_deg": right_j4_deg,
+            "previous_target_lag_deg": lag_deg,
+            "actual_j3_delta_deg": actual_delta_deg,
+            "target_j3_delta_deg": target_delta_deg,
+        }
+
+
+def is_controller_alarm(exc):
+    """Recognize the latched left/right controller alarm sent by robot_node."""
+    return (
+        isinstance(exc, RobotServerError)
+        and ("left robot error!" in str(exc).lower()
+             or "right robot error!" in str(exc).lower()
+             or "192.168.5.1: error!" in str(exc).lower()
+             or "192.168.5.2: error!" in str(exc).lower())
+    )
+
+
+def finish_robot_fault(recorder, exc, step=None):
+    """Persist a robot I/O fault as a failed physical attempt exactly once."""
+    if not recorder.active:
+        return None
+    kind = "controller_alarm" if is_controller_alarm(exc) else "robot_io_fault"
+    reason = f"{kind}: {type(exc).__name__}: {exc}"
+    recorder.add_event(
+        "robot_controller_alarm" if kind == "controller_alarm" else "robot_io_fault",
+        step=step, kind=kind,
+        exception_type=type(exc).__name__, message=str(exc),
+    )
+    return recorder.finish("failure", reason)
+
+
+def controllers_ready_for_recovery(statuses):
+    """Require fresh, parseable, alarm-free ENABLED_IDLE for both arms."""
+    def valid_empty_error_reply(response):
+        # parse_error_ids() intentionally returns [] on malformed input too;
+        # that is insufficient to authorize motion after a controller fault.
+        match = re.fullmatch(
+            r"\s*0,\{(.+)\},GetErrorID\(\);?\s*", response,
+        )
+        if match is None:
+            return False
+        try:
+            payload = ast.literal_eval(match.group(1))
+        except (SyntaxError, ValueError):
+            return False
+
+        def valid_tree(value):
+            if isinstance(value, bool):
+                return False
+            if isinstance(value, int):
+                return value == 0
+            if isinstance(value, (list, tuple)):
+                return all(valid_tree(item) for item in value)
+            return False
+
+        return isinstance(payload, (list, tuple)) and valid_tree(payload)
+
+    return (
+        len(statuses) == 2
+        and {status.name for status in statuses} == {"left", "right"}
+        and all(
+            status.mode == 5 and not status.error_ids
+            and status.mode_response.startswith("0,")
+            and valid_empty_error_reply(status.error_response)
+            for status in statuses
+        )
+    )
+
+
+def finalize_recorded_rollout(recorder, env, result, reason="", idle_light=True,
+                              step=None, robot_fault=None):
+    """Finalize once, converting any robot I/O uncertainty into a failure."""
+    if result == "success" and robot_fault is None:
+        try:
+            env.get_obs()
+        except ROBOT_IO_EXCEPTIONS as exc:
+            robot_fault = exc
+    if idle_light and robot_fault is None:
+        try:
+            set_idle_light(env)
+        except Exception as exc:
+            robot_fault = exc
+    if robot_fault is not None:
+        return finish_robot_fault(recorder, robot_fault, step=step), robot_fault
+    return recorder.finish(result, reason), None
+
+
 def classify_workspace_position(position):
     """Distinguish the known right-arm insertion zone from a hard XYZ breach.
 
@@ -592,7 +748,8 @@ def check_action_safety(env, action, check_workspace=True):
     return violations
 
 
-def emergency_stop(env):
+def set_alarm_light(env):
+    """Only change the stack light; this is not a controller emergency stop."""
     env.set_do_status([3, 0])  # 黄灯灭
     env.set_do_status([2, 0])  # 绿灯灭
     env.set_do_status([1, 1])  # 红灯亮
@@ -752,10 +909,14 @@ def main(args):
     pending_request_id = None
     pending_request_started = None
     next_replan_step = 0
+    contact_guard = JointTrackingGuard()
+    faulted = False
+    needs_manual_reset = False
 
-    def finish_rollout(result, reason="", idle_light=True):
+    def finish_rollout(result, reason="", idle_light=True, robot_fault=None):
         nonlocal running, action_chunk, chunk_idx, rollout_generation
         nonlocal pending_request_id, pending_request_started
+        nonlocal faulted, needs_manual_reset, emergency
         # Stop the control/record loop and change the light immediately when the
         # operator marks the result. recorder.finish() may still need a moment
         # to flush already queued frames to disk, but no new frame is accepted.
@@ -768,15 +929,17 @@ def main(args):
         rollout_generation += 1
         pending_request_id = None
         pending_request_started = None
-        if idle_light:
-            try:
-                set_idle_light(env)
-            except Exception as light_exc:
-                print(
-                    f"[IDLE LIGHT FAILED] {type(light_exc).__name__}: {light_exc}",
-                    flush=True,
-                )
-        meta = recorder.finish(result, reason)
+        meta, robot_fault = finalize_recorded_rollout(
+            recorder, env, result, reason, idle_light, total_steps, robot_fault,
+        )
+        if robot_fault is not None:
+            result = "failure"
+            faulted = True
+            needs_manual_reset = True
+            emergency = True
+            print(f"[ROBOT FAULT] {type(robot_fault).__name__}: {robot_fault}",
+                  flush=True)
+            print_fault_guidance()
         if meta is not None:
             print(
                 f"[RESULT] {result.upper()} | steps={meta['num_steps']} | "
@@ -794,10 +957,58 @@ def main(args):
                 )
 
     def print_ready():
-        print("[READY] h RESET, then r START the next rollout.", flush=True)
+        if faulted:
+            print("[HOLD] Clear contact/alarm, then c CHECK, h RESET.", flush=True)
+        else:
+            print("[READY] h RESET, then r START the next rollout.", flush=True)
+
+    def print_fault_guidance():
+        print(
+            "[HOLD] No further motion commands will be sent. Remove the physical "
+            "interference first. Check controller alarms with "
+            "python scripts/check_dobot_alarm.py; clear only after inspection. "
+            "A latched launch_nodes.py alarm requires restarting that server. "
+            "Then press c for a read-only health check, h to reset, or q to quit. "
+            "Use the physical emergency-stop button if motion or force persists.",
+            flush=True,
+        )
+
+    def enter_robot_fault(exc):
+        """Fail closed after robot I/O failed; never retry the same command."""
+        nonlocal faulted, needs_manual_reset, emergency
+        faulted = True
+        needs_manual_reset = True
+        emergency = True  # A controller alarm also rejects stack-light RPCs.
+        if recorder.active:
+            finish_rollout("failure", idle_light=False, robot_fault=exc)
+        else:
+            print(f"[ROBOT FAULT] {type(exc).__name__}: {exc}", flush=True)
+            print_fault_guidance()
+
+    def check_recovery():
+        """Read both controller alarms and robot state; never clear/enable/move."""
+        nonlocal faulted, emergency
+        try:
+            statuses = query_all_controllers()
+            for status in statuses:
+                print("[RECOVERY] " + format_status(status), flush=True)
+            if not controllers_ready_for_recovery(statuses):
+                print("[RECOVERY] Both arms must report ENABLED_IDLE with no alarms.",
+                      flush=True)
+                return
+            env.get_obs()
+        except Exception as exc:
+            print(f"[RECOVERY] Robot still unavailable: {exc}", flush=True)
+            return
+        faulted = False
+        emergency = False
+        print("[RECOVERY] Controller and robot server checks passed. This cannot prove "
+              "the plugs are separated; press h only after clearing the scene.",
+              flush=True)
 
     def reset_robot():
         """Return to the standard initial pose without creating a rollout."""
+        nonlocal needs_manual_reset
         set_idle_light(env)
         if args.dry_run:
             if policy_runner is None or not policy_runner.is_busy():
@@ -808,6 +1019,7 @@ def main(args):
         move_to_initial_pose(env)
         if policy_runner is None or not policy_runner.is_busy():
             client.reset()
+        needs_manual_reset = False
         print("[RESET] Complete (orange light = idle).", flush=True)
 
     def start_rollout():
@@ -815,6 +1027,10 @@ def main(args):
         nonlocal action_chunk, chunk_idx, total_steps, ignore_workspace_safety
         nonlocal infer_latency_ms, rollout_generation
         nonlocal pending_request_id, pending_request_started, next_replan_step
+        if needs_manual_reset:
+            print("[WAIT] Previous contact/alarm requires an explicit h RESET first.",
+                  flush=True)
+            return
         if policy_runner is not None:
             # A result from a just-finished rollout normally completes before
             # the operator starts again. Refuse to overlap websocket calls if
@@ -860,6 +1076,7 @@ def main(args):
         action_ensemble.clear()
         total_steps = 0
         ignore_workspace_safety = False
+        contact_guard.reset()
         pending_request_id = None
         pending_request_started = None
         rollout_generation += 1
@@ -948,7 +1165,7 @@ def main(args):
     print("\n-------------- X-Trainer real-robot evaluation --------------")
     print("r: start + record     s: success     f: failure")
     print("h: abort if running + reset/home     q: finish program")
-    print("e: emergency stop + finish program")
+    print("e: stop policy commands + exit; use the physical E-stop for immediate stop")
     print("green = running/recording; orange = idle/recording stopped")
     print(
         "policy control: "
@@ -962,6 +1179,9 @@ def main(args):
             "unexpected limits stop the current rollout"
         )
     print("q during a rollout records ABORTED and does not enter the success rate.")
+    print("contact guard: " + ("on (v2 right-J3 reversal pattern)" if args.contact_guard
+                                else "off"))
+    print("A robot alarm or contact warning holds motion until c CHECK and h RESET.")
     print("Press r when the scene and robot are ready.\n")
 
     try:
@@ -977,7 +1197,10 @@ def main(args):
                     show_canvas[:, :640] = img_list[0][:, :, ::-1]
                     show_canvas[:, 640:1280] = img_list[1][:, :, ::-1]
                     show_canvas[:, 1280:1920] = img_list[2][:, :, ::-1]
-                    if running:
+                    if faulted:
+                        status_text = "ROBOT HOLD  |  clear contact/alarm  c CHECK  h RESET  q QUIT"
+                        status_color = (0, 0, 255)
+                    elif running:
                         status_text = (
                             f"RUNNING  step={total_steps}  |  "
                             "s SUCCESS  f FAILURE  h ABORT+RESET  q QUIT"
@@ -1012,19 +1235,42 @@ def main(args):
                 key = select_key_input(
                     terminal_key,
                     cv_key,
-                    accepted_keys={"r", "s", "f", "h", "q", "e"},
+                    accepted_keys={"r", "s", "f", "h", "q", "e", "c"},
                 )
+
+                if faulted:
+                    if key == "c":
+                        check_recovery()
+                    elif key in ("q", "e"):
+                        quit_requested = True
+                    elif key in ("r", "h"):
+                        print("[HOLD] Clear the scene and alarm, then press c CHECK first.",
+                              flush=True)
+                    else:
+                        time.sleep(0.02)
+                    continue
 
                 if not running:
                     if key == "r":
-                        start_rollout()
+                        try:
+                            start_rollout()
+                        except ROBOT_IO_EXCEPTIONS as exc:
+                            enter_robot_fault(exc)
                     elif key == "h":
-                        reset_robot()
+                        try:
+                            reset_robot()
+                        except ROBOT_IO_EXCEPTIONS as exc:
+                            enter_robot_fault(exc)
                     elif key == "q":
                         quit_requested = True
                     elif key == "e":
-                        emergency_stop(env)
                         emergency = True
+                        try:
+                            set_alarm_light(env)
+                        except Exception as light_exc:
+                            print(f"[ALARM LIGHT FAILED] {light_exc}", flush=True)
+                        print("[STOP] Policy commands ended. Use the physical E-stop if needed.",
+                              flush=True)
                         quit_requested = True
                     else:
                         time.sleep(0.02)
@@ -1040,16 +1286,25 @@ def main(args):
                     continue
                 if key == "h":
                     finish_rollout("aborted", "operator_reset")
-                    reset_robot()
+                    if not faulted:
+                        try:
+                            reset_robot()
+                        except ROBOT_IO_EXCEPTIONS as exc:
+                            enter_robot_fault(exc)
                     continue
                 if key == "q":
                     finish_rollout("aborted", "operator_quit")
                     quit_requested = True
                     continue
                 if key == "e":
-                    emergency_stop(env)
                     emergency = True
-                    finish_rollout("failure", "emergency_stop", idle_light=False)
+                    finish_rollout("failure", "operator_stop", idle_light=False)
+                    try:
+                        set_alarm_light(env)
+                    except Exception as light_exc:
+                        print(f"[ALARM LIGHT FAILED] {light_exc}", flush=True)
+                    print("[STOP] Policy commands ended. Use the physical E-stop if needed.",
+                          flush=True)
                     quit_requested = True
                     continue
 
@@ -1258,11 +1513,15 @@ def main(args):
                         print_ready()
                         continue
 
-                violations, workspace_detail = evaluate_action_safety(
-                    env,
-                    action,
-                    check_workspace=not ignore_workspace_safety,
-                )
+                try:
+                    violations, workspace_detail = evaluate_action_safety(
+                        env,
+                        action,
+                        check_workspace=not ignore_workspace_safety,
+                    )
+                except ROBOT_IO_EXCEPTIONS as exc:
+                    enter_robot_fault(exc)
+                    continue
                 if "joint" in violations:
                     # The rejected action has not been sent to the robot, so end
                     # this rollout and return to idle instead of killing the
@@ -1337,7 +1596,36 @@ def main(args):
                         print_ready()
                         continue
 
-                # 通过安全检查后再落盘，保证记录中的 control 确实被下发。
+                # 检测只读历史命令和反馈，不修改正常 policy 动作。异常模式出现时
+                # 停止发送下一步，并要求人工检查；不自动 ClearError/复位。
+                if first or requires_smooth_move:
+                    contact_guard.reset()
+                elif args.contact_guard:
+                    try:
+                        contact_suspected, contact_detail = contact_guard.observe(
+                            action, state,
+                        )
+                    except ValueError as exc:
+                        enter_robot_fault(exc)
+                        continue
+                    if contact_suspected:
+                        recorder.add_event(
+                            "suspected_insertion_contact", step=total_steps,
+                            **contact_detail,
+                        )
+                        finish_rollout("failure", "suspected_insertion_contact")
+                        faulted = True
+                        needs_manual_reset = True
+                        print(
+                            "[CONTACT HOLD] Right J3 reversed while the target kept "
+                            "advancing. The next action was not sent. Remove any "
+                            "interference, check controller alarms, then press c CHECK "
+                            "and h RESET. Use the physical E-stop if force persists.",
+                            flush=True,
+                        )
+                        continue
+
+                # 记录尝试下发的动作；若此后机器人拒绝命令，fault event 会注明失败。
                 recorder.record(
                     state=state,
                     action=action,
@@ -1347,12 +1635,16 @@ def main(args):
                     ensemble_sources=ensemble_sources,
                 )
 
-                if first or requires_smooth_move:
-                    move_smoothly(env, last_action, action, max_steps=100)
-                    first = False
+                try:
+                    if first or requires_smooth_move:
+                        move_smoothly(env, last_action, action, max_steps=100)
+                        first = False
 
-                last_action = action.copy()
-                obs = env.step(action, np.array([1, 1]))
+                    last_action = action.copy()
+                    obs = env.step(action, np.array([1, 1]))
+                except ROBOT_IO_EXCEPTIONS as exc:
+                    enter_robot_fault(exc)
+                    continue
                 obs["joint_positions"][6] = action[6]
                 obs["joint_positions"][13] = action[13]
                 state = obs["joint_positions"].astype(np.float32)
@@ -1377,14 +1669,14 @@ def main(args):
             # commands through the same failed transport in the finally block.
             emergency = True
             try:
-                emergency_stop(env)
+                set_alarm_light(env)
             except Exception as stop_exc:
                 # Keep the first exception visible.  A dead robot server cannot
                 # deliver a software E-stop and used to mask the actual timeout
                 # with a secondary ZMQ EFSM error here.
                 print(
-                    f"[EMERGENCY STOP FAILED] {type(stop_exc).__name__}: {stop_exc}. "
-                    "Use the physical emergency-stop button.",
+                    f"[ALARM LIGHT FAILED] {type(stop_exc).__name__}: {stop_exc}. "
+                    "Use the physical emergency-stop button if needed.",
                     flush=True,
                 )
         raise

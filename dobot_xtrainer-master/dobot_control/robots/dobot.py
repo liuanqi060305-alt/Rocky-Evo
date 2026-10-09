@@ -69,16 +69,29 @@ class DobotRobot(Robot):
     def get_robot_err(self):
         while not self._stop_thread.is_set():
             time.sleep(0.001)
-            with self._lock:
-                if self.robot_status.get_error():
-                    if not self.robot_is_err:
-                        print(
-                            f"[ROBOT ALARM] {self.robot_ip}: controller reports an error; "
-                            "motion requests will be rejected until the alarm is cleared "
-                            "and launch_nodes.py is restarted.",
-                            flush=True,
-                        )
-                    self.robot_is_err = True
+            try:
+                with self._lock:
+                    alarmed = self.robot_status.get_error()
+            except Exception as exc:
+                # A dead 30004 feedback stream must not leave robot_is_err=False
+                # while ServoJ commands continue through the separate 30003 socket.
+                self.robot_is_err = True
+                print(
+                    f"[ROBOT STATUS LOST] {self.robot_ip}: "
+                    f"{type(exc).__name__}: {exc}; motion requests are blocked "
+                    "until launch_nodes.py is restarted.",
+                    flush=True,
+                )
+                return
+            if alarmed:
+                if not self.robot_is_err:
+                    print(
+                        f"[ROBOT ALARM] {self.robot_ip}: controller reports an error; "
+                        "motion requests will be rejected until the alarm is cleared "
+                        "and launch_nodes.py is restarted.",
+                        flush=True,
+                    )
+                self.robot_is_err = True
 
     def num_dofs(self) -> int:
         """Get the number of joints of the robot.

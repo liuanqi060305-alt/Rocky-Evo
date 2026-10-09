@@ -212,9 +212,12 @@ class DobotApiStatus(DobotApi):
         hasRead = 0
         while hasRead < 1440:
             temp = self.socket_dobot.recv(1440 - hasRead)
-            if len(temp) > 0:
-                hasRead += len(temp)
-                data += temp
+            if not temp:
+                raise ConnectionError(
+                    f"{self.ip}:{self.port} status stream closed before a full frame"
+                )
+            hasRead += len(temp)
+            data += temp
         hasRead = 0
         feedInfo = np.frombuffer(data, dtype=MyType)
         return feedInfo['error_status'][0]

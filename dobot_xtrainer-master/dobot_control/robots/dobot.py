@@ -149,13 +149,23 @@ class DobotRobot(Robot):
         assert not self.robot_is_err, f"{self.robot_ip}: error!"
         robot_joints_angle = joint_state[:6]  # 单位：弧�?
         robot_joints = [np.rad2deg(robot_joint) for robot_joint in robot_joints_angle]
-        self.robot.ServoJ(robot_joints[0],
-                          robot_joints[1],
-                          robot_joints[2],
-                          robot_joints[3],
-                          robot_joints[4],
-                          robot_joints[5],
-                          0.03)
+        try:
+            self.robot.ServoJ(robot_joints[0],
+                              robot_joints[1],
+                              robot_joints[2],
+                              robot_joints[3],
+                              robot_joints[4],
+                              robot_joints[5],
+                              0.03)
+        except Exception as exc:
+            self.robot_is_err = True
+            print(
+                f"[ROBOT MOTION PORT FAULT] {self.robot_ip}: "
+                f"{type(exc).__name__}: {exc}; later motion is blocked until "
+                "launch_nodes.py is restarted.",
+                flush=True,
+            )
+            raise
         if self._use_gripper:
             gripper_pos = int(joint_state[-1] * 255)
             self.gripper.move(gripper_pos, 100, 1)

@@ -1,5 +1,7 @@
 import socket
 import threading
+import re
+import time
 from tkinter import Text, END
 import datetime
 import numpy as np
@@ -703,6 +705,75 @@ class DobotApiMove(DobotApi):
     """
     Define class dobot_api_move to establish a connection to Dobot
     """
+    MOTION_ACK_TIMEOUT_S = 0.05
+
+    def __init__(self, ip, port, *args):
+        super().__init__(ip, port, *args)
+        self._motion_lock = threading.Lock()
+        self._motion_reply_buffer = bytearray()
+        self._motion_fault = None
+
+    def _read_motion_reply(self, deadline):
+        """Read one semicolon-terminated TCP reply, preserving packet splits."""
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("Dobot motion acknowledgement exceeded 50ms")
+            end = self._motion_reply_buffer.find(b";")
+            if end >= 0:
+                raw = bytes(self._motion_reply_buffer[:end + 1])
+                del self._motion_reply_buffer[:end + 1]
+                return raw.decode("utf-8").strip()
+            if len(self._motion_reply_buffer) > 4096:
+                raise RuntimeError("motion reply exceeded 4096 bytes")
+            self.socket_dobot.settimeout(remaining)
+            chunk = self.socket_dobot.recv(4096)
+            if not chunk:
+                raise ConnectionError("Dobot motion port closed before its reply")
+            self._motion_reply_buffer.extend(chunk)
+
+    def sendRecvMsg(self, string):
+        """Send exactly once and verify its matching motion-port acknowledgement.
+
+        Never reconnect/resend a motion command: the controller may have
+        executed it even when its acknowledgement was lost. A malformed,
+        missing, extra, or negative reply latches this socket unusable until
+        the operator restarts launch_nodes.py on a clean connection.
+        """
+        with self._motion_lock:
+            if self._motion_fault is not None:
+                raise RuntimeError(
+                    f"Dobot motion port is faulted: {self._motion_fault}"
+                )
+            if self._motion_reply_buffer.strip():
+                self._motion_fault = "unsolicited or unmatched motion reply"
+                raise RuntimeError(self._motion_fault)
+            self._motion_reply_buffer.clear()  # harmless CR/LF after prior ';'
+            command_name = string.split("(", 1)[0]
+            try:
+                deadline = time.monotonic() + self.MOTION_ACK_TIMEOUT_S
+                self.socket_dobot.settimeout(self.MOTION_ACK_TIMEOUT_S)
+                self.socket_dobot.sendall(string.encode("utf-8"))
+                reply = self._read_motion_reply(deadline)
+                match = re.fullmatch(
+                    r"(-?\d+),\{.*\},([A-Za-z][A-Za-z0-9]*)\(.*\);",
+                    reply,
+                )
+                if match is None or match.group(2) != command_name:
+                    raise RuntimeError(
+                        f"unmatched Dobot motion reply for {command_name}: {reply}"
+                    )
+                error_id = int(match.group(1))
+                if error_id != 0:
+                    raise RuntimeError(
+                        f"Dobot rejected {command_name} with code {error_id}: {reply}"
+                    )
+                if self._motion_reply_buffer.strip():
+                    raise RuntimeError("extra unmatched Dobot motion reply")
+                return reply
+            except Exception as exc:
+                self._motion_fault = f"{type(exc).__name__}: {exc}"
+                raise
 
     def MovJ(self, x, y, z, rx, ry, rz, *dynParams):
         """
@@ -870,10 +941,7 @@ class DobotApiMove(DobotApi):
         """
         string = "ServoJ({:f},{:f},{:f},{:f},{:f},{:f},{:f},gain=500)".format(
             j1, j2, j3, j4, j5, j6, t)
-        # log_write(__file__, "servoj 1: " + string)
-        #  aaa = self.sendRecvMsg(string)  # wait for recvieve msg from robot
-        self.send_data(string)  # not wait
-        # return
+        return self.sendRecvMsg(string)
 
     def ServoJS(self, j1, j2, j3, j4, j5, j6):
         """

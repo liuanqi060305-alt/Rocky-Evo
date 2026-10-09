@@ -80,12 +80,12 @@
     "started": true,
     "started_at": "2026-10-09T20:38:39+08:00",
     "pid": 2870,
-    "latest_observation_at": "2026-10-09T20:46:42+08:00",
+    "latest_observation_at": "2026-10-09T21:09:10+08:00",
     "latest_metrics": {
-      "step": 100,
-      "grad_norm": 0.3791,
-      "loss": 0.0552,
-      "param_norm": 1802.3861
+      "step": 1000,
+      "grad_norm": 0.0785,
+      "loss": 0.0189,
+      "param_norm": 1802.4767
     },
     "step_0_metrics": {
       "grad_norm": 1.4922,
@@ -94,7 +94,7 @@
     },
     "observed_seconds_per_step": 1.5,
     "estimated_duration_hours": 20.5,
-    "estimated_completion": "2026-10-10T17:15:00+08:00"
+    "estimated_completion": "2026-10-10T17:35:00+08:00"
   },
   "conversion": {
     "completed": true,
@@ -138,12 +138,12 @@
     "lerobot_conversion_complete": true,
     "norm_stats_complete": true,
     "training_started": true,
-    "first_checkpoint_verified": false,
+    "first_checkpoint_verified": true,
     "training_complete": false,
     "final_checkpoint_verified": false,
     "platform_task_stopped": false
   },
-  "updated_at": "2026-10-09T20:47:15+08:00",
+  "updated_at": "2026-10-09T21:11:18+08:00",
   "preparation": {
     "runner": "/share/home/tm904895221620000/a1173895530/openpi训练/patches/run_v3_all188_szu.sh",
     "prepare_log": "/share/home/tm904895221620000/a1173895530/openpi训练/logs/plug_v3_all188_full_h100_20261009_50k.prepare.log",
@@ -152,5 +152,18 @@
     "zstd_version": "1.5.7",
     "local_snapshot_reason": "avoid DPC shared-filesystem small-file extraction bottleneck",
     "local_lerobot_reason": "avoid DPC random-read/write bottleneck during conversion and training"
+  },
+  "first_checkpoint": {
+    "step": 1000,
+    "verified_at": "2026-10-09T21:10:18+08:00",
+    "path": "/share/home/tm904895221620000/a1173895530/openpi训练/checkpoints/pi05_xtrainer_full_v3_all188/plug_v3_all188_full_h100_20261009_50k/1000",
+    "size_bytes": 223559398975,
+    "temporary_directories_absent": true,
+    "required_files_present": true,
+    "params_metadata_readable": true,
+    "train_state_metadata_readable": true,
+    "orbax_latest_step": 1000,
+    "norm_stats_sha256": "e5021ed3fe3a17f29783126e06eed0afda90975ac078bc3009399ff83b5a8fcc",
+    "norm_stats_hash_matches": true
   }
 }

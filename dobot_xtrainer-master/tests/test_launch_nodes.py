@@ -9,6 +9,15 @@ from scripts.check_dobot_alarm import ControllerStatus
 
 
 EMPTY_ERRORS = "0,{[[],[],[],[],[],[],[]]},GetErrorID();"
+MULTILINE_EMPTY_ERRORS = """0,{[
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    []
+]\n},GetErrorID();"""
 
 
 def status(
@@ -35,6 +44,43 @@ def status(
 class LaunchNodesPreflightTests(unittest.TestCase):
     def setUp(self):
         self.args = launch_nodes.Args(hostname="127.0.0.1", robot_port=6002)
+
+    def test_clear_error_replies_are_ready(self):
+        clear_replies = {
+            "controller multiline payload": MULTILINE_EMPTY_ERRORS,
+            "empty payload": "0,{},GetErrorID();",
+        }
+
+        for case, error_response in clear_replies.items():
+            with self.subTest(case=case):
+                self.assertTrue(launch_nodes.controller_ready_for_launch(status(
+                    "left",
+                    mode=4,
+                    error_response=error_response,
+                )))
+
+    def test_multiline_alarm_and_trailing_data_are_not_ready(self):
+        unsafe_replies = {
+            "multiline alarm": """0,{[
+                [],
+                [116],
+                [],
+                [],
+                [],
+                [],
+                []
+            ]\n},GetErrorID();""",
+            "trailing data": "0,{},GetErrorID();garbage",
+        }
+
+        for case, error_response in unsafe_replies.items():
+            with self.subTest(case=case):
+                self.assertFalse(launch_nodes.controller_ready_for_launch(status(
+                    "left",
+                    mode=4,
+                    error_ids=[],
+                    error_response=error_response,
+                )))
 
     def test_port_probe_reports_bind_failure_without_real_socket(self):
         with mock.patch.object(launch_nodes.socket, "socket") as socket_factory:

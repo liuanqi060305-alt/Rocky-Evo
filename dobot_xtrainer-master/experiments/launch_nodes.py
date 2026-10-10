@@ -42,15 +42,20 @@ def controller_ready_for_launch(status) -> bool:
     if mode is None or int(mode.group(1)) != status.mode or status.error_ids:
         return False
     errors = re.fullmatch(
-        r"\s*0,\{(.+)\},GetErrorID\(\);?\s*",
+        r"\s*0,\{(.*)\},GetErrorID\(\);?\s*",
         status.error_response or "",
+        flags=re.DOTALL,
     )
     if errors is None:
         return False
-    try:
-        payload = ast.literal_eval(errors.group(1))
-    except (SyntaxError, ValueError):
-        return False
+    raw_payload = errors.group(1).strip()
+    if not raw_payload:
+        payload = ()
+    else:
+        try:
+            payload = ast.literal_eval(raw_payload)
+        except (SyntaxError, ValueError):
+            return False
 
     def contains_only_empty_or_zero(value):
         if isinstance(value, bool):

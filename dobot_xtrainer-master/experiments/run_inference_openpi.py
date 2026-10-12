@@ -72,11 +72,16 @@ CONTACT_MIN_TARGET_DELTA_DEG = -0.4
 JOINT_JUMP_WARNING_RAD = 0.17
 AUTO_SMOOTH_JOINT_JUMP_MAX_DEG = 25.0
 
-# 原 XYZ 保护要求两臂 Z>42mm。现有成功轨迹会在右臂插接阶段稳定进入
-# 33.82--42mm；只把“其余五个方向均正常、且仅右臂 Z 在 30--42mm”识别为
-# 已验证的任务区。其它 XYZ 越界仍会终止当前 rollout。
+# 原 XYZ 保护要求两臂 Z>42mm。左臂桌面拾取只在 V2 轨迹覆盖的局部盒内
+# 允许 30--42mm，右臂保留已有的低位插接特例。其它 XYZ 越界仍会
+# 终止当前 rollout。
 WORKSPACE_Z_MIN_MM = 42.0
+LEFT_PICKUP_Z_FLOOR_MM = 30.0
+LEFT_PICKUP_X_RANGE_MM = (-201.0, -158.0)
+LEFT_PICKUP_Y_RANGE_MM = (-407.0, -359.0)
+LEFT_PICKUP_MAX_DURATION_S = 2.0
 RIGHT_INSERTION_Z_FLOOR_MM = 30.0
+NOVA2_TOOL_Z_MM = 197.0
 # Per-dimension median of frame-0 control targets from the 54 episodes used by
 # plug_v1_54eps_full_h100. The former rounded pose put LJ5/RJ5 13.8/8.7 degrees
 # outside the demonstration start median and pushed both wrists beyond q01/q99.
@@ -356,6 +361,16 @@ class RolloutRecorder:
                 "auto_smooth_joint_jump_max_deg": (
                     AUTO_SMOOTH_JOINT_JUMP_MAX_DEG
                 ),
+                "left_pickup_bounds_mm": {
+                    "x": LEFT_PICKUP_X_RANGE_MM,
+                    "y": LEFT_PICKUP_Y_RANGE_MM,
+                    "z": (LEFT_PICKUP_Z_FLOOR_MM, WORKSPACE_Z_MIN_MM),
+                    "x_y_bounds_exclusive": True,
+                    "z_lower_exclusive": True,
+                    "z_upper_inclusive": True,
+                },
+                "left_pickup_max_duration_s": LEFT_PICKUP_MAX_DURATION_S,
+                "left_action_target_fk": "Nova2_DH_with_197mm_TCP",
                 "right_insertion_z_floor_mm": RIGHT_INSERTION_Z_FLOOR_MM,
                 "contact_guard": self.args.contact_guard,
                 "contact_guard_rule": {
@@ -708,12 +723,96 @@ def finalize_recorded_rollout(recorder, env, result, reason="", idle_light=True,
     return recorder.finish(result, reason), None
 
 
-def classify_workspace_position(position):
-    """Distinguish the known right-arm insertion zone from a hard XYZ breach.
+def _dh_transform(theta, d, a, alpha):
+    """Return one standard DH transform for the offline Nova2 FK check."""
+    cos_theta, sin_theta = np.cos(theta), np.sin(theta)
+    cos_alpha, sin_alpha = np.cos(alpha), np.sin(alpha)
+    return np.array([
+        [cos_theta, -sin_theta * cos_alpha, sin_theta * sin_alpha,
+         a * cos_theta],
+        [sin_theta, cos_theta * cos_alpha, -cos_theta * sin_alpha,
+         a * sin_theta],
+        [0.0, sin_alpha, cos_alpha, d],
+        [0.0, 0.0, 0.0, 1.0],
+    ], dtype=np.float64)
 
-    The bounds match the original safety check exactly. The only automatic
-    exception is the task's observed right-arm low-Z phase; X/Y and the left
-    arm retain their original limits.
+
+def nova2_tcp_position_mm(joint_positions):
+    """Compute a Nova2 TCP target offline using the configured 197 mm tool."""
+    joints = np.asarray(joint_positions, dtype=np.float64).reshape(-1)
+    if joints.size < 6:
+        raise ValueError(f"Nova2 FK needs 6 joints, got {joints.size}")
+    q0, q1, q2, q3, q4, q5 = joints[:6]
+    dh_params = (
+        (q0, 0.2234, 0.0, np.pi / 2),
+        (q1 - np.pi / 2, 0.0, -0.280, 0.0),
+        (q2, 0.0, -0.225, 0.0),
+        (q3 - np.pi / 2, 0.1175, 0.0, np.pi / 2),
+        (q4, 0.120, 0.0, -np.pi / 2),
+        (q5, 0.088, 0.0, 0.0),
+    )
+    transform = np.eye(4, dtype=np.float64)
+    for params in dh_params:
+        transform = transform @ _dh_transform(*params)
+    tool = np.eye(4, dtype=np.float64)
+    tool[2, 3] = NOVA2_TOOL_Z_MM / 1000.0
+    return (transform @ tool)[:3, 3] * 1000.0
+
+
+def is_left_pickup_position(position):
+    """Return whether a TCP position is inside the bounded low-Z pickup box."""
+    pos = np.asarray(position, dtype=np.float64).reshape(-1)
+    if pos.size < 3 or not np.all(np.isfinite(pos[:3])):
+        return False
+    return (
+        LEFT_PICKUP_X_RANGE_MM[0] < pos[0] < LEFT_PICKUP_X_RANGE_MM[1]
+        and LEFT_PICKUP_Y_RANGE_MM[0] < pos[1] < LEFT_PICKUP_Y_RANGE_MM[1]
+        and LEFT_PICKUP_Z_FLOOR_MM < pos[2] <= WORKSPACE_Z_MIN_MM
+    )
+
+
+def classify_left_target_position(target_position):
+    """Reject only non-finite or unsafe low-Z targets from the offline FK."""
+    target = np.asarray(target_position, dtype=np.float64).reshape(-1)
+    if target.size < 3 or not np.all(np.isfinite(target[:3])):
+        return "hard_limit"
+    if target[2] > WORKSPACE_Z_MIN_MM:
+        # FK is used only to close the one-step low-Z gap. Approximation error
+        # must not add a new X/Y restriction to the established high path.
+        return "safe"
+    return "left_pickup_zone" if is_left_pickup_position(target) else "hard_limit"
+
+
+def classify_left_action_target(action):
+    """Safely classify a pending target without querying or moving the robot."""
+    try:
+        action_array = np.asarray(action, dtype=np.float64).reshape(-1)
+        if action_array.size < 6:
+            raise ValueError(
+                f"left action target needs at least 6 values, got {action_array.size}"
+            )
+        target = nova2_tcp_position_mm(action_array[:6])
+    except (TypeError, ValueError, IndexError, FloatingPointError, OverflowError):
+        return "hard_limit", np.full(3, np.nan, dtype=np.float64)
+    if not np.all(np.isfinite(target)):
+        return "hard_limit", target
+    return classify_left_target_position(target), target
+
+
+def left_pickup_zone_timed_out(entered_at, now):
+    """Pure duration check used by the runtime and deterministic unit tests."""
+    return (
+        entered_at is not None
+        and now - entered_at > LEFT_PICKUP_MAX_DURATION_S
+    )
+
+
+def classify_workspace_position(position):
+    """Distinguish the bounded left pickup/right insertion task zones.
+
+    The global bounds match the original safety check exactly. The left-arm
+    exception additionally requires the measured TCP to remain inside the
+    data-supported pickup box. Simultaneous low-Z violations remain hard.
     """
     pos = np.asarray(position, dtype=np.float64).reshape(-1)
     if pos.size < 9:
@@ -730,6 +829,8 @@ def classify_workspace_position(position):
     reasons = [name for name, valid in checks if not valid]
     if not reasons:
         return "safe", reasons
+    if reasons == ["left_z"] and is_left_pickup_position(pos[:3]):
+        return "left_pickup_zone", reasons
     if (reasons == ["right_z"]
             and RIGHT_INSERTION_Z_FLOOR_MM < pos[8] <= WORKSPACE_Z_MIN_MM):
         return "right_insertion_zone", reasons
@@ -739,7 +840,7 @@ def classify_workspace_position(position):
 def evaluate_action_safety(env, action, check_workspace=True):
     """与原厂 run_inference.py 完全一致的安全边界，阈值未改动。
 
-    附带 workspace 分类，使主循环只自动通过已验证的右臂插接低位。
+    附带 workspace 分类，使主循环只自动通过有界的任务低位。
     """
     violations = []
     workspace_detail = None
@@ -761,8 +862,9 @@ def evaluate_action_safety(env, action, check_workspace=True):
             "position": pos.tolist(),
         }
         if classification != "safe":
-            print("[Warn]:The robot arm XYZ is out of the safe position!")
-            print(pos)
+            if classification == "hard_limit":
+                print("[Warn]:The robot arm XYZ is out of the safe position!")
+                print(pos)
             violations.append("workspace")
 
     return violations, workspace_detail
@@ -931,6 +1033,8 @@ def main(args):
     total_steps = 0
     infer_latency_ms = None
     ignore_workspace_safety = False
+    active_left_pickup_zone = False
+    left_pickup_zone_entered_at = None
     rollout_generation = 0
     pending_request_id = None
     pending_request_started = None
@@ -1051,6 +1155,7 @@ def main(args):
     def start_rollout():
         nonlocal running, state, last_action, first
         nonlocal action_chunk, chunk_idx, total_steps, ignore_workspace_safety
+        nonlocal active_left_pickup_zone, left_pickup_zone_entered_at
         nonlocal infer_latency_ms, rollout_generation
         nonlocal pending_request_id, pending_request_started, next_replan_step
         if needs_manual_reset:
@@ -1102,6 +1207,8 @@ def main(args):
         action_ensemble.clear()
         total_steps = 0
         ignore_workspace_safety = False
+        active_left_pickup_zone = False
+        left_pickup_zone_entered_at = None
         contact_guard.reset()
         pending_request_id = None
         pending_request_started = None
@@ -1539,6 +1646,34 @@ def main(args):
                         print_ready()
                         continue
 
+                left_target_classification = None
+                left_target_position = None
+                if (not args.interactive_safety_prompts
+                        and not ignore_workspace_safety):
+                    left_target_classification, left_target_position = (
+                        classify_left_action_target(action)
+                    )
+                    if left_target_classification == "hard_limit":
+                        recorder.add_event(
+                            "left_action_target_rejected",
+                            step=total_steps,
+                            action=np.asarray(action).tolist(),
+                            target_position_mm=left_target_position.tolist(),
+                        )
+                        print(
+                            "[SAFETY STOP] Pending left-arm low-Z TCP target is "
+                            "outside the bounded pickup zone: "
+                            + np.array2string(
+                                left_target_position, precision=3
+                            ),
+                            flush=True,
+                        )
+                        finish_rollout(
+                            "failure", "left_target_safety_boundary"
+                        )
+                        print_ready()
+                        continue
+
                 try:
                     violations, workspace_detail = evaluate_action_safety(
                         env,
@@ -1557,70 +1692,123 @@ def main(args):
                     print_ready()
                     continue
                 if "workspace" in violations:
-                    if args.interactive_safety_prompts:
-                        decision = wait_for_safety_key(
-                            keys,
-                            "XYZ LIMIT | i IGNORE THIS ROLLOUT | f FAIL",
-                            accepted_keys={"i", "f"},
-                        )
-                    else:
-                        decision = (
-                            "i"
-                            if workspace_detail["classification"]
-                            == "right_insertion_zone"
-                            else "f"
-                        )
-                    if decision == "i":
-                        # This deliberately matches the old post-i behavior:
-                        # after the known insertion transition, later XYZ RPCs
-                        # are skipped for this rollout. The model action and
-                        # motion command path are therefore unchanged.
-                        ignore_workspace_safety = True
-                        recorder.add_event(
-                            "workspace_safety_override",
-                            step=total_steps,
-                            action=np.asarray(action).tolist(),
-                            workspace=workspace_detail,
-                            decision_source=(
-                                "interactive" if args.interactive_safety_prompts
-                                else "automatic"
-                            ),
-                        )
-                        if args.interactive_safety_prompts:
+                    classification = workspace_detail["classification"]
+                    automatic_left_pickup = (
+                        not args.interactive_safety_prompts
+                        and classification == "left_pickup_zone"
+                    )
+                    if automatic_left_pickup:
+                        now = time.monotonic()
+                        if not active_left_pickup_zone:
+                            active_left_pickup_zone = True
+                            left_pickup_zone_entered_at = now
+                            recorder.add_event(
+                                "workspace_safety_override",
+                                step=total_steps,
+                                action=np.asarray(action).tolist(),
+                                workspace=workspace_detail,
+                                decision_source="automatic",
+                                scope="bounded_left_pickup_zone",
+                                target_classification=left_target_classification,
+                                target_position_mm=left_target_position.tolist(),
+                            )
                             print(
-                                "[OVERRIDE] i accepted; XYZ workspace checks are "
-                                "disabled for this rollout. Joint limits remain active.",
+                                "[TASK ZONE] Expected left-arm pickup position "
+                                "accepted; bounded XYZ checks remain active.",
                                 flush=True,
+                            )
+                        elif left_pickup_zone_timed_out(
+                                left_pickup_zone_entered_at, now):
+                            recorder.add_event(
+                                "workspace_safety_rejected",
+                                step=total_steps,
+                                action=np.asarray(action).tolist(),
+                                workspace=workspace_detail,
+                                decision_source="automatic",
+                                reason="left_pickup_zone_timeout",
+                                duration_s=now - left_pickup_zone_entered_at,
+                            )
+                            print(
+                                "[SAFETY STOP] Left arm remained in the low-Z "
+                                f"pickup zone for more than "
+                                f"{LEFT_PICKUP_MAX_DURATION_S:.1f}s.",
+                                flush=True,
+                            )
+                            finish_rollout(
+                                "failure", "left_pickup_zone_timeout"
+                            )
+                            print_ready()
+                            continue
+                    else:
+                        active_left_pickup_zone = False
+                        left_pickup_zone_entered_at = None
+                        if args.interactive_safety_prompts:
+                            decision = wait_for_safety_key(
+                                keys,
+                                "XYZ LIMIT | i IGNORE THIS ROLLOUT | f FAIL",
+                                accepted_keys={"i", "f"},
                             )
                         else:
-                            print(
-                                "[TASK ZONE] Expected right-arm insertion height "
-                                "accepted; continuing without a key press. "
-                                "Joint limits remain active.",
-                                flush=True,
+                            decision = (
+                                "i"
+                                if classification == "right_insertion_zone"
+                                else "f"
                             )
-                    else:
-                        recorder.add_event(
-                            "workspace_safety_rejected",
-                            step=total_steps,
-                            action=np.asarray(action).tolist(),
-                            workspace=workspace_detail,
-                            decision_source=(
-                                "interactive" if args.interactive_safety_prompts
-                                else "automatic"
-                            ),
-                        )
-                        if not args.interactive_safety_prompts:
-                            print(
-                                "[SAFETY STOP] Unexpected XYZ boundary: "
-                                + ", ".join(workspace_detail["reasons"]),
-                                flush=True,
+                        if decision == "i":
+                            # Keep the established right-zone and explicit-i
+                            # semantics: later XYZ RPCs are skipped for this
+                            # rollout. Automatic left pickup never takes this path.
+                            ignore_workspace_safety = True
+                            recorder.add_event(
+                                "workspace_safety_override",
+                                step=total_steps,
+                                action=np.asarray(action).tolist(),
+                                workspace=workspace_detail,
+                                decision_source=(
+                                    "interactive"
+                                    if args.interactive_safety_prompts
+                                    else "automatic"
+                                ),
                             )
-                        finish_rollout(
-                            "failure", "workspace_safety_boundary"
-                        )
-                        print_ready()
-                        continue
+                            if args.interactive_safety_prompts:
+                                print(
+                                    "[OVERRIDE] i accepted; XYZ workspace checks are "
+                                    "disabled for this rollout. Joint limits remain active.",
+                                    flush=True,
+                                )
+                            else:
+                                print(
+                                    "[TASK ZONE] Expected right-arm insertion height "
+                                    "accepted; continuing without a key press. "
+                                    "Joint limits remain active.",
+                                    flush=True,
+                                )
+                        else:
+                            recorder.add_event(
+                                "workspace_safety_rejected",
+                                step=total_steps,
+                                action=np.asarray(action).tolist(),
+                                workspace=workspace_detail,
+                                decision_source=(
+                                    "interactive"
+                                    if args.interactive_safety_prompts
+                                    else "automatic"
+                                ),
+                            )
+                            if not args.interactive_safety_prompts:
+                                print(
+                                    "[SAFETY STOP] Unexpected XYZ boundary: "
+                                    + ", ".join(workspace_detail["reasons"]),
+                                    flush=True,
+                                )
+                            finish_rollout(
+                                "failure", "workspace_safety_boundary"
+                            )
+                            print_ready()
+                            continue
+                else:
+                    active_left_pickup_zone = False
+                    left_pickup_zone_entered_at = None
 
                 # 检测只读历史命令和反馈，不修改正常 policy 动作。异常模式出现时
                 # 停止发送下一步，并要求人工检查；不自动 ClearError/复位。
